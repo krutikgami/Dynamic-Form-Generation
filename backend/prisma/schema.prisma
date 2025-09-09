@@ -20,6 +20,8 @@ model User {
   submissions    Submission[]
   accessControls AccessControl[]
   formViews      FormView[]
+  createdForms   Form[]          @relation("CreatedForms")
+  updatedForms   Form[]          @relation("UpdatedForms")
 }
 
 model Form {
@@ -29,6 +31,13 @@ model Form {
   schema          Json
   userId          String
   user            User            @relation(fields: [userId], references: [id])
+
+ //use for auditing
+  createdById    String?
+  created_By      User?           @relation("CreatedForms", fields: [createdById], references: [id])
+  updatedById    String?
+  updated_By      User?           @relation("UpdatedForms", fields: [updatedById], references: [id])
+
   status          FormStatus
   maxSubmissions  Int?            // null = unlimited
   submissionCount Int             @default(0)
@@ -37,6 +46,7 @@ model Form {
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
   deleted_at      DateTime?
+
   submissions     Submission[]
   accessControls  AccessControl[]
   analytics       FormAnalytics?
