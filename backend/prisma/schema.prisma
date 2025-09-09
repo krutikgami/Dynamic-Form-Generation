@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  name           String?
+  password       String
+  role           Role
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+  deleted_at     DateTime?
+  forms          Form[]
+  submissions    Submission[]
+  accessControls AccessControl[]
+  formViews      FormView[]
+}
+
+model Form {
+  id              String          @id @default(uuid())
+  title           String
+  description     String?
+  schema          Json
+  userId          String
+  user            User            @relation(fields: [userId], references: [id])
+  status          FormStatus
+  maxSubmissions  Int?            // null = unlimited
+  submissionCount Int             @default(0)
+  startDate       DateTime?       // form availability start
+  endDate         DateTime?       // form expiry
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  deleted_at      DateTime?
+  submissions     Submission[]
+  accessControls  AccessControl[]
+  analytics       FormAnalytics?
+  views           FormView[]
+}
+
+model Submission {
+  id        String   @id @default(uuid())
+  formId    String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  form      Form     @relation(fields: [formId], references: [id])
+  data      Json
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+}
+
+model AccessControl {
+  id      String  @id @default(uuid())
+  formId  String
+  form    Form    @relation(fields: [formId], references: [id])
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id])
+  role    Role?
+}
+
+model FormAnalytics {
+  id               String   @id @default(uuid())
+  formId           String   @unique
+  form             Form     @relation(fields: [formId], references: [id])
+  totalViews       Int      @default(0)
+  totalSubmissions Int      @default(0)
+  lastViewedAt     DateTime?
+  lastSubmittedAt  DateTime?
+}
+
+model FormView {
+  id       String   @id @default(uuid())
+  formId   String
+  form     Form     @relation(fields: [formId], references: [id])
+  userId   String?
+  user     User?    @relation(fields: [userId], references: [id])
+  viewedAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum FormStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
