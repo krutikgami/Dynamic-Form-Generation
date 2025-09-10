@@ -1,14 +1,4 @@
-const FIELD_TYPES = [
-  { type: 'text', label: 'Text Input', icon: '📝' },
-  { type: 'number', label: 'Number', icon: '🔢' },
-  { type: 'email', label: 'Email', icon: '📧' },
-  { type: 'date', label: 'Date', icon: '📅' },
-  { type: 'textarea', label: 'Text Area', icon: '📄' },
-  { type: 'select', label: 'Select', icon: '📋' },
-  { type: 'checkbox', label: 'Checkbox Group', icon: '☑️' },
-  { type: 'radio', label: 'Radio Group', icon: '⚪' },
-]
-
+import { FIELD_TYPES } from "../../utilities/AdminPanelConstants/FieldTypes.js"
 function FieldPalette() {
   const handleDragStart = (e, fieldType) => {
     e.dataTransfer.setData('fieldType', fieldType)
