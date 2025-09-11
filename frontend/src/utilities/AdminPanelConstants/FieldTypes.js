@@ -25,3 +25,27 @@ export const getDefaultLabel = (type) => {
     }
     return labels[type] || 'Field'
 }
+
+const properties = {
+    width: "40px",
+    height: "20px",
+    backgroundColor: "#4caf50",
+    color: "#fff",
+    border: "1px solid #333",
+    borderRadius: "6px",
+    padding: "4px 8px",
+    margin: "10px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    textAlign: "center",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+    boxShadow: "0px 2px 6px rgba(0,0,0,0.2)"
+  }
+
+export const giveCss = () => {
+    return properties;
+}
+

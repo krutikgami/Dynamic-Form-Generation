@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import Header from "./components/Header.jsx"
 import BuilderPage from "./pages/BuilderPage.jsx"
-// import RendererPage from "./pages/RendererPage.jsx"
-// import ManagerPage from "./pages/ManagerPage.jsx"
+import RendererPage from "./pages/RenderPage.jsx"
 
 function App() {
   return (
@@ -13,8 +12,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/builder" replace />} />
             <Route path="/builder" element={<BuilderPage />} />
-            {/* <Route path="/renderer" element={<RendererPage />} /> */}
-            {/* <Route path="/manager" element={<ManagerPage />} /> */}
+            <Route path="/renderer" element={<RendererPage />} />
           </Routes>
         </div>
       </div>

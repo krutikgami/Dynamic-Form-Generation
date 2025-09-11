@@ -1,7 +1,9 @@
 import { useCallback } from "react"
 import { getDefaultLabel } from "../../utilities/AdminPanelConstants/FieldTypes.js"
+import { useNavigate } from "react-router-dom"
 
-export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, onFieldChange}) {
+export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, onFieldChange,onhandleSave}) {
+  const navigate = useNavigate();
     const handleDragOver = (e) => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'copy'
@@ -146,7 +148,7 @@ const renderFieldPreview = (field) => {
      ) : (
         <>
       {field.type === 'button' &&(
-        <button type={field?.default} style={{backgroundColor : 'blue', color: 'white'}} >{field.label}</button>
+        <button style={field.style} type={field.defaultBehaviour}>{field.label}</button>
       )}
       </>
     )}
@@ -182,10 +184,9 @@ const renderField = (field, idx) => {
           className="bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded cursor-grab text-sm"
           title="Drag to reorder"
         >
-          ⋮⋮
+          ::
         </div>
       </div>
-
       {renderFieldPreview(field)}
     </div>
   )
@@ -230,7 +231,7 @@ const renderField = (field, idx) => {
             </div>
 
             <div
-                className="border-2 border-dashed border-gray-300 rounded-md p-6 h-[50vh] overflow-y-auto bg-gray-50"
+                className="border-2 border-dashed border-gray-300 rounded-md p-6 h-[40vh] overflow-y-auto bg-gray-50"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
             >
@@ -241,6 +242,13 @@ const renderField = (field, idx) => {
                 ) : (
                     schema.fields.map((field,idx)=>renderField(field,idx))
                 )}
+            </div>
+
+            <div className="flex justify-end mt-4 gap-2">
+              <button className="bg-blue-600 text-white w-22 h-10 rounded-2xl mb-0 cursor-pointer" onClick={()=>{
+                navigate('/renderer',{state : {schema : schema , isPreview : true}})
+              }}>Preview</button>
+              <button className="bg-green-600 text-white w-22 h-10 rounded-2xl mb-0 cursor-pointer" onClick={onhandleSave}>Save Form</button>
             </div>
         </div>
         </>
