@@ -24,6 +24,7 @@ model User {
   updatedForms   Form[]          @relation("UpdatedForms")
 }
 
+
 model Form {
   id              String          @id @default(uuid())
   title           String
@@ -69,7 +70,7 @@ model AccessControl {
   id      String  @id @default(uuid())
   formId  String
   form    Form    @relation(fields: [formId], references: [id])
-  userId  String?
+  userId  String
   user    User?   @relation(fields: [userId], references: [id])
   role    Role?
 }

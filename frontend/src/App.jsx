@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Header from "./components/Header.jsx"
 import BuilderPage from "./pages/BuilderPage.jsx"
 import RendererPage from "./pages/RenderPage.jsx"
-
+import ViewAllForms from "./pages/ViewAllForms.jsx"
 function App() {
   return (
     <Router>
@@ -13,6 +13,7 @@ function App() {
             <Route path="/" element={<Navigate to="/builder" replace />} />
             <Route path="/builder" element={<BuilderPage />} />
             <Route path="/renderer" element={<RendererPage />} />
+            <Route path="/view" element={<ViewAllForms />} />
           </Routes>
         </div>
       </div>

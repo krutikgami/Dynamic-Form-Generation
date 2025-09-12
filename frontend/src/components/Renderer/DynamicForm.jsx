@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function DynamicForm({ schema }) {
+export default function DynamicForm({ schema,isPreview }) {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
@@ -212,7 +212,7 @@ export default function DynamicForm({ schema }) {
     <form onSubmit={handleSubmit} className="p-4 bg-gray-50 rounded-lg">
       <h2 className="text-xl font-bold mb-4">{schema?.title}</h2>
       <p className="text-sm text-gray-300 m-2">{schema?.description}</p>
-      {schema?.fields.map((field) => renderField(field))}
+      {isPreview ? schema?.fields?.map((field) => renderField(field)) :schema?.map((field) => renderField(field))}
     </form>
   );
 }

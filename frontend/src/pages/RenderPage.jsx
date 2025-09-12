@@ -8,19 +8,17 @@ export default function RenderPage(){
     const isPreview = location?.state?.isPreview
     const [schema,setSchema] = useState(null);
 
+
     useEffect(()=>{
-        if(isPreview){
-            setSchema(stateSchema)
-        }else{
-        setSchema(JSON.parse(localStorage.getItem('schema')))
-        }
+        setSchema(stateSchema)
     },[])
 
     console.log("Render Page Data :",schema);
     return(
      <div className="flex justify-center items-center w-full">
         <div className="w-full max-w-lg mt-5">
-            <DynamicForm schema={schema} />
+            <DynamicForm schema={schema} isPreview={isPreview} />
+            
         </div>
       </div>
     )

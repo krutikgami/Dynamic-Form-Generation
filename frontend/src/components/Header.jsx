@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom"
 export default function Header() {
   const tabs = [
     { id: "builder", label: "Builder", path: "/builder" },
-    { id: "renderer", label: "Renderer", path: "/renderer" },
+    { id: "renderer", label: "Renderer", path: "/view" },
     { id: "manager", label: "Manager", path: "/manager" },
   ]
 

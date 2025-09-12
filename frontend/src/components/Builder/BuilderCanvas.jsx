@@ -1,9 +1,7 @@
 import { useCallback } from "react"
 import { getDefaultLabel } from "../../utilities/AdminPanelConstants/FieldTypes.js"
-import { useNavigate } from "react-router-dom"
 
-export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, onFieldChange,onhandleSave}) {
-  const navigate = useNavigate();
+export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, onFieldChange}) {
     const handleDragOver = (e) => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'copy'
@@ -242,13 +240,6 @@ const renderField = (field, idx) => {
                 ) : (
                     schema.fields.map((field,idx)=>renderField(field,idx))
                 )}
-            </div>
-
-            <div className="flex justify-end mt-4 gap-2">
-              <button className="bg-blue-600 text-white w-22 h-10 rounded-2xl mb-0 cursor-pointer" onClick={()=>{
-                navigate('/renderer',{state : {schema : schema , isPreview : true}})
-              }}>Preview</button>
-              <button className="bg-green-600 text-white w-22 h-10 rounded-2xl mb-0 cursor-pointer" onClick={onhandleSave}>Save Form</button>
             </div>
         </div>
         </>
