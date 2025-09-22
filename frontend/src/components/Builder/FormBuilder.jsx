@@ -35,7 +35,7 @@ export default function FormBuilder({ form, onFormSaved }) {
                 title : schema.title,
                 description : schema.description,
                 fields: schema.fields,
-                userId : '9e26fea3-c30d-4834-b9d5-29a6e57cf660'
+                userId : '4fe465cf-fcd4-4414-8483-e2bf3b1db10d'
             }
             const res = await fetch('/api/v1/admin/form',{
                 headers:{
@@ -105,7 +105,7 @@ export default function FormBuilder({ form, onFormSaved }) {
                     className="bg-blue-600 text-white w-22 h-10 rounded-2xl mb-0 cursor-pointer" 
                     onClick={()=>{
                     navigate('/renderer',{state : {schema : schema , isPreview : true}})
-              }     }>Preview</button>
+                    }}>Preview</button>
 
                     <button
                     disabled={isSaved}

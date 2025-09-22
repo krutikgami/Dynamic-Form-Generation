@@ -27,15 +27,17 @@ export default function DynamicForm({ schema,isPreview }) {
             if(value && value.length > parseInt(ruleObj.ruleValue)){
                 error = ruleObj.message;
             }
+            break;
         
-          case "pattern":
+          case "pattern": {
             const regex = new RegExp(
-            ruleObj.ruleValue.replace(/^\/|\/$/g, "")
+              ruleObj.ruleValue.replace(/^\/|\/$/g, "")
             );
             if (value && !regex.test(value)) {
-            error = ruleObj.message;
+              error = ruleObj.message;
             }
             break;
+          }
 
           default:
             break;
@@ -46,12 +48,13 @@ export default function DynamicForm({ schema,isPreview }) {
     }
 
     return error;
-  };
+};
 
 
   const validateForm = () => {
     let newErrors = {};
-    schema.fields.forEach((field) => {
+    const fields = Array.isArray(schema) ? schema : schema?.fields || [];
+    fields.forEach((field) => {
       const value = formData[field.name];
       const error = validateField(field, value);
       if (error) newErrors[field.name] = error;
@@ -173,7 +176,7 @@ export default function DynamicForm({ schema,isPreview }) {
         return (
           <button
             key={field.id}
-            type={field.defaultBehaviour === "submit" ? "submit" : "button"}
+            type="submit"
             style={{
               width: `${field.style?.width || 100}px`,
               height: `${field.style?.height || 40}px`,

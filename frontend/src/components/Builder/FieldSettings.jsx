@@ -184,8 +184,8 @@ return (
           <textarea
             rows={10}
             cols={40}
-            className="bg-black text-white w-full"
-            value={style ? JSON.stringify(style) : ""}
+            className={`${Object.values(style || {}).length>0?"text-yellow-500":"text-white"} w-full border bg-black border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono`}
+            value={style ? JSON.stringify(style).split(",").join("\n") : ""}
             onChange={(e) => {
                 setStyle(JSON.parse(e.target.value));
             }}
