@@ -1,22 +1,38 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
-export default function PublishModal({ isOpen, onClose, onPublish }) {
+export default function PublishModal({ isOpen, onClose, onPublish,formData }) {
   const [status, setStatus] = useState('ACTIVE');
   const [maxSubmissions, setMaxSubmissions] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [userIds, setUserIds] = useState("");
 
+  console.log('Form Data: ',formData)
+  useEffect(()=>{
+    if (formData) {
+      setStatus(formData.status || "ACTIVE");
+      setMaxSubmissions(formData.maxSubmissions ?? "");
+      setStartDate(formData.startDate ? formData.startDate.split("T")[0] : "");
+      setEndDate(formData.endDate ? formData.endDate.split("T")[0] : "");
+      setUserIds(
+        formData.accessControls
+          ? formData.accessControls.map((d) => d.userId).join(",")
+          : ""
+      );
+    } 
+  },[formData,isOpen])
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const payload = {
+      id : formData.id,
       status,
       maxSubmissions: maxSubmissions ? parseInt(maxSubmissions) : null,
       startDate: startDate || null,
       endDate: endDate || null,
       userIds: userIds.split(",").map(u => u.trim()).filter(Boolean)
     };
-    onPublish(payload);
+    onPublish(payload,onClose);
   };
 
   if (!isOpen) return null;

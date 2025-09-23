@@ -35,3 +35,25 @@ export const getFormsById = async(req,res)=>{
      return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }
+
+export const updateForm = async(req,res)=>{
+    try {
+        const formData = req.body;
+        const updatedForm = await formService.updateFormService(formData);
+        return sendResponse(res, STATUS_CODES.OK, true, "Forms Updated successfully", updatedForm);
+    } catch (error) {
+     console.error('Controller Error in updating Form',error)
+     return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
+// export const updateFormDetails = async(req,res)=>{
+//     try {
+//         const updateDetails = req.body;
+//         const result = await formService.updateDetailsFormService(updateDetails);
+//         return sendResponse(res,STATUS_CODES.OK,true,'Form Details update successfully',result);
+//     } catch (error) {
+//         console.error('Controller Error in updateFormDetails',error)
+//         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message);
+//     }
+// }

@@ -3,6 +3,7 @@ import Header from "./components/Header.jsx"
 import BuilderPage from "./pages/BuilderPage.jsx"
 import RendererPage from "./pages/RenderPage.jsx"
 import ViewAllForms from "./pages/ViewAllForms.jsx"
+import Login from "./pages/LoginPage.jsx"
 function App() {
   return (
     <Router>
@@ -11,6 +12,7 @@ function App() {
         <div >
           <Routes>
             <Route path="/" element={<Navigate to="/builder" replace />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/builder" element={<BuilderPage />} />
             <Route path="/renderer" element={<RendererPage />} />
             <Route path="/view" element={<ViewAllForms />} />

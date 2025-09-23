@@ -1,5 +1,5 @@
 import { UserRepository } from "../repositories/user.repository.js";
-import {hashPassword} from '../utilities/bcryptPass.js'
+import {hashPassword,comparePassword} from '../utilities/bcryptPass.js'
 
 const userRepo = new UserRepository();
 export class UserService{
@@ -21,5 +21,26 @@ export class UserService{
           throw error;
         }
 
+    }
+
+    async loginUserService(userData){
+        try {
+            const {email,password} = userData;
+            if(!email || !password){
+                throw new Error('All fields are required')
+            }
+            const userExists = await userRepo.findUSerExists({email})
+            if(!userExists){
+                throw new Error('Invalid Credentials')
+            }
+            const validPassword = await comparePassword(password,userExists.password)
+            if(!validPassword){
+                throw new Error('Invalid Password')
+            }
+            return userExists;
+        } catch (error) {
+          console.error('Error in User Service.loginUserService',error)
+          throw error;
+        }
     }
 }

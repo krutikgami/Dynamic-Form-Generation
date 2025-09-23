@@ -57,19 +57,19 @@ export class FormService{
             const end = new Date(endDate);
 
             if (isNaN(start.getTime())) {
-            throw new Error('Invalid startDate format');
+                throw new Error('Invalid startDate format');
             }
             if (isNaN(end.getTime())) {
-            throw new Error('Invalid endDate format');
+                throw new Error('Invalid endDate format');
             }
 
             let maxSubs = null;
             if (maxSubmissions !== null && maxSubmissions !== undefined) {
-            if (Number.isInteger(maxSubmissions)) {
-                maxSubs = maxSubmissions;
-            } else {
-                throw new Error('maxSubmissions must be an integer or null');
-            }
+                if (Number.isInteger(maxSubmissions)) {
+                    maxSubs = maxSubmissions;
+                } else {
+                    throw new Error('maxSubmissions must be an integer or null');
+                }
             }
 
             const isFormExist = await formRepo.getFormExists(id);
@@ -89,13 +89,23 @@ export class FormService{
                     tx
                 )
 
-                await formRepo.createAccessControl(
-                    userIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
-                    tx
-                )
+                if(isFormExist && isFormExist.accessControls.length > 0){
+                    await formRepo.deleteAccessControlByFormId({formId : id},tx);  
+                }
 
-                await formRepo.createFormAnalytics({ formId: id }, tx)
+                if(isFormExist){
+                    await formRepo.createAccessControl(
+                        userIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
+                        tx
+                    )
+                }
 
+                const isExists  = await formRepo.getFormAnalyticsById({formId : id},tx);
+
+                if(!isExists){
+                    await formRepo.createFormAnalytics({ formId: id }, tx)
+                }
+                
                 return publishedForm
             })
         } catch (error) {
@@ -119,5 +129,76 @@ export class FormService{
             throw error;
         }
     }
+
+    async updateFormService(formData){
+        try {
+            const {id,title,description,fields,userId} = formData;
+            if(!title || title.trim().length === 0){
+                throw new Error('Form title is required')
+            }
+
+            if(!Array.isArray(fields) ||fields.length === 0){
+                throw new Error('Atleast one Field is required')
+            }
+
+            const isFormExists = await formRepo.getFormExists(id);
+            if(!isFormExists){
+                throw new Error('Form Doesn`t exists')
+            }
+            return await formRepo.updateForm({
+                id,
+                title,
+                description,
+                schema : fields,
+                updatedById : userId
+            });
+        } catch (error) {
+            console.error('Error in FormService.updateFormService', error);
+            throw error;
+        }
+    }
+
+    // async updateDetailsFormService(updateDetails){
+    //     try {
+    //         const {id,userId,status,maxSubmissions,endDate,startDate,userIds} = updateDetails;
+    //         const isFormExists = await formRepo.getFormExists(id)
+    //         if(!isFormExists){
+    //             throw new Error('Form Doesn`t exists')
+    //         }
+    //         const isuserExists = await userRepo.findUSerExists({id : userId});
+    //         if(!isuserExists){
+    //             throw new Error('UnAuthorised Access')
+    //         }
+    //         if(!Number.isInteger(maxSubmissions)){
+    //             throw new Error('MaxSubmissions must be an Integer')
+    //         }
+
+    //         const start = new Date(startDate);
+    //         const end = new Date(endDate);
+
+    //         if (isNaN(start.getTime())) {
+    //             throw new Error('Invalid startDate format');
+    //         }
+    //         if (isNaN(end.getTime())) {
+    //             throw new Error('Invalid endDate format');
+    //         }
+
+    //         return await prisma.$transaction(async(tx)=>{
+    //             const updateFormDetails  = await formRepo.updateFormDetails(updateDetails,tx)
+
+    //             await formRepo.deleteAccessControlUserId({formId : id},tx)
+
+    //             await formRepo.createAccessControl(
+    //                 userIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
+    //                 tx
+    //             )
+
+    //             return updateFormDetails;
+    //         })
+    //     } catch (error) {
+    //         console.error('Error in FormService.updateDetails',error);
+    //         throw error;
+    //     }
+    // }
 
 }

@@ -53,7 +53,7 @@ export default function DynamicForm({ schema,isPreview }) {
 
   const validateForm = () => {
     let newErrors = {};
-    const fields = Array.isArray(schema) ? schema : schema?.fields || [];
+    const fields = Array.isArray(schema?.schema) ? schema?.schema : schema?.fields || [];
     fields.forEach((field) => {
       const value = formData[field.name];
       const error = validateField(field, value);
@@ -215,7 +215,7 @@ export default function DynamicForm({ schema,isPreview }) {
     <form onSubmit={handleSubmit} className="p-4 bg-gray-50 rounded-lg">
       <h2 className="text-xl font-bold mb-4">{schema?.title}</h2>
       <p className="text-sm text-gray-300 m-2">{schema?.description}</p>
-      {isPreview ? schema?.fields?.map((field) => renderField(field)) :schema?.map((field) => renderField(field))}
+      {isPreview ? schema?.fields?.map((field) => renderField(field)) : schema?.schema?.map((field) => renderField(field))}
     </form>
   );
 }

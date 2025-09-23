@@ -18,7 +18,6 @@ export default function RenderPage(){
      <div className="flex justify-center items-center w-full">
         <div className="w-full max-w-lg mt-5">
             <DynamicForm schema={schema} isPreview={isPreview} />
-            
         </div>
       </div>
     )

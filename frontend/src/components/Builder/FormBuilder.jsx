@@ -4,8 +4,9 @@ import BuilderCanvas from "./BuilderCanvas";
 import FieldSettings from "./FieldSettings";
 import {useNavigate} from 'react-router-dom'
 import PublishModal from "./PublishModal";
+import { handlePublish } from "../../utilities/services/publishService.js";
 
-export default function FormBuilder({ form, onFormSaved }) {
+export default function FormBuilder({ form, onFormSaved,isEdit }) {
     const navigate = useNavigate();
     const [schema,setSchema] =useState({
         title : 'New Form',
@@ -15,15 +16,15 @@ export default function FormBuilder({ form, onFormSaved }) {
 
     const [isSaved,setIsSaved] = useState(false);
     const [showPublishModal,setShowPublishModal] = useState(false);
-    const [formId,setFormId] = useState(null)
+    const [formdata,setFormData] = useState(null)
 
     const [selectedFieldId,setSelectedFieldId] = useState(null)
 
 
     useEffect(()=>{
         setSchema({
-            title : form.schema.title || 'New Form',
-            description : form.schema.description || '',
+            title : form.title || 'New Form',
+            description : form.description || '',
             fields : form.schema.fields || []
         })
         
@@ -31,63 +32,36 @@ export default function FormBuilder({ form, onFormSaved }) {
 
     const handleDraft = async() =>{
         try {
+            
             const formData = {
+                id: form ? form.id : null,
                 title : schema.title,
                 description : schema.description,
                 fields: schema.fields,
-                userId : '4fe465cf-fcd4-4414-8483-e2bf3b1db10d'
+                userId : '9e26fea3-c30d-4834-b9d5-29a6e57cf660'
             }
-            const res = await fetch('/api/v1/admin/form',{
+            const api = isEdit ? '/api/v1/admin/updateForm' : '/api/v1/admin/form'
+            const res = await fetch(api,{
                 headers:{
                     'Content-Type' : 'application/json'
                 },
-                method : "POST",
+                method : isEdit ? "PATCH" : "POST",
                 body : JSON.stringify(formData)
             })
             const data = await res.json();
             console.log(data)
             if(!res.ok){
-                alert(data.message)
                 setIsSaved(false);
+                alert(data.message)
             }
             setIsSaved(true);
-            setFormId(data.data.id)
+            setFormData(data.data)
             alert(data.message)
             
         }catch (error) {
             console.error("save Draft error", error);
         }
     }
-
-    const handlePublish = async (publishData) => {
-    try {
-      
-      const publishPayload = {
-        id : formId,
-        ...publishData
-      };
-
-      const res = await fetch("/api/v1/admin/form", {
-        headers: {
-          "Content-Type": "application/json"
-        },
-        method: "PATCH",
-        body: JSON.stringify(publishPayload)
-      });
-
-      const data = await res.json();
-      console.log(data);
-      if (!res.ok) {
-        alert(data.message);
-        return;
-      }
-
-      alert("Form published successfully!");
-      setShowPublishModal(false);
-    } catch (error) {
-      console.error("Publish error", error);
-    }
-  };
     
     console.log(schema);
     return(
@@ -116,11 +90,13 @@ export default function FormBuilder({ form, onFormSaved }) {
                     }`}
                     onClick={handleDraft}
                     >
-                    Save Draft
+                    {isEdit ? "Edit Form" :"Save Draft"}
                     </button>
                     <button
                     disabled={!isSaved}
-                    className="px-4 py-2 rounded-2xl bg-blue-600 text-white hover:bg-blue-700"
+                    className={`
+                        ${!isSaved ? "bg-gray-400 cursor-not-allowed" :
+                        "bg-blue-600 text-white hover:bg-blue-700"} px-4 py-2 rounded-2xl`}
                     onClick={() => setShowPublishModal(true)}
                     >
                     Publish
@@ -136,6 +112,7 @@ export default function FormBuilder({ form, onFormSaved }) {
                 isOpen={showPublishModal}
                 onClose={() => setShowPublishModal(false)}
                 onPublish={handlePublish}
+                formData={formdata}
             />
         </div>
      </>   

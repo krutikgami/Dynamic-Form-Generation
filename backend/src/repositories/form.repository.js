@@ -20,11 +20,11 @@ export class FormRepository{
             id : formData.id
           },
           data :{
-             maxSubmissions : formData.maxSubmissions,
-             status : formData.status,
-             startDate : formData.startDate,
-             endDate : formData.endDate
-            }
+            maxSubmissions : formData.maxSubmissions,
+            status : formData.status,
+            startDate : formData.startDate,
+            endDate : formData.endDate
+          }
         })
       } catch (error) {
         console.error('DB Error in FormRepository.publishForm',error)
@@ -37,6 +37,9 @@ export class FormRepository{
         return await prisma.form.findUnique({
           where:{
             id
+          },
+          include:{
+            accessControls : true
           }
         })
       } catch (error) {
@@ -77,6 +80,9 @@ export class FormRepository{
         return await prisma.form.findMany({
           where :{
             userId : id
+          },
+          include:{
+            accessControls : true
           }
         })
       } catch (error) {
@@ -84,4 +90,71 @@ export class FormRepository{
         throw new Error('Database error while getting Forms')
       }
     }
+
+    async getFormAnalyticsById({formId},client=tx){
+      try {
+        return await client.formAnalytics.findFirst({
+          where :{
+            formId
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.getFormAnalyticsById',error)
+        throw new Error('Database error while getting Forms analytics')
+      }
+    }
+
+    async updateForm(formData){
+      try {
+        const {id,title,schema,description,updatedById} = formData;
+        return await prisma.form.update({
+          where : {
+            id
+          },
+          data:{
+            title,
+            description,
+            schema,
+            updatedById
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.updateForm',error)
+        throw new Error('Database error while updating Form')
+      }
+    }
+
+    async deleteAccessControlByFormId({formId},client=tx){
+      try {
+        return await client.accessControl.deleteMany({
+          where :{
+            formId
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.updateAccessControl',error)
+        throw new Error('Database error while updating AccessControl Forms')
+      }
+    }
+
+    // async updateFormDetails(updateDetails,client=tx){
+    //   try {
+    //     const {id,status,maxSubmissions,endDate,startDate} = updateDetails;
+    //     return await client.form.update({
+    //       where : {
+    //        id
+    //       },
+    //       data :{
+    //        startDate,
+    //        endDate,
+    //        maxSubmissions,
+    //        status
+    //       }
+    //     })
+    //   } catch (error) {
+    //     console.error('DB Error in FormRepository.updateFormDetails',error)
+    //     throw new Error('Database error while updating form details Forms')
+    //   }
+    // }
+
 }

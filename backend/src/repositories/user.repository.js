@@ -12,14 +12,13 @@ export class UserRepository{
     }
     async findUSerExists({email,id}){
         try {
-            console.log(id);
-            
             return await prisma.user.findFirst({
                 where: {
                     OR: [
                         email ? { email } : undefined,
                         id ? { id } : undefined
-                    ].filter(Boolean)
+                    ].filter(Boolean),
+                    deleted_at : null
                 }
             })
         } catch (error) {
