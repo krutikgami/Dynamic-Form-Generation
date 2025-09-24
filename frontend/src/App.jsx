@@ -1,26 +1,50 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import Header from "./components/Header.jsx"
 import BuilderPage from "./pages/BuilderPage.jsx"
 import RendererPage from "./pages/RenderPage.jsx"
 import ViewAllForms from "./pages/ViewAllForms.jsx"
 import Login from "./pages/LoginPage.jsx"
-function App() {
+import ProtectedAdmin from "./pages/PotectedAdmin.jsx"
+import { getCookie } from "./utilities/getCookie.js"
+import { decodeToken } from "./utilities/decodeToken.js"
+function AppLayout() {
+  const token = getCookie() || null;
+  const decoded = token ? decodeToken(token) : null;
+  const location = useLocation()
+
+  if (!token && location.pathname !== "/login") {
+    return <Navigate to="/login" replace />
+  }
+
+  if (token && decoded?.role === "ADMIN" && location.pathname === "/login") {
+    return <Navigate to="/builder" replace />
+  }
+  if (token && decoded?.role === "USER" && location.pathname === "/login") {
+    return <Navigate to="/view" replace />
+  }
+
+  const hideHeader = location.pathname === "/login"
+
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-100">
-        <Header />
-        <div >
-          <Routes>
-            <Route path="/" element={<Navigate to="/builder" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/builder" element={<BuilderPage />} />
-            <Route path="/renderer" element={<RendererPage />} />
-            <Route path="/view" element={<ViewAllForms />} />
-          </Routes>
-        </div>
+    <div className="min-h-screen bg-gray-100">
+      {!hideHeader && <Header role={decoded?.role}/>}
+      <div>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/builder" element={<ProtectedAdmin role={decoded?.role}><BuilderPage token={decoded} /> </ProtectedAdmin>} />
+          <Route path="/renderer" element={<RendererPage />} />
+          <Route path="/view" element={<ViewAllForms role={decoded?.role}/>} />
+        </Routes>
       </div>
-    </Router>
+    </div>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <Router>
+      <AppLayout />
+    </Router>
+  )
+}

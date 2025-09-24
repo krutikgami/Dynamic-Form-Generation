@@ -37,6 +37,7 @@ export class UserService{
             if(!validPassword){
                 throw new Error('Invalid Password')
             }
+
             return userExists;
         } catch (error) {
           console.error('Error in User Service.loginUserService',error)

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PublishModal from "../components/Builder/PublishModal";
 import { handlePublish } from "../utilities/services/publishService.js";
 
-export default function ViewAllForms() {
+export default function ViewAllForms({role}) {
   const [forms, setForms] = useState([]);
   const [idx,setIdx] = useState(null);
   const [showPublishModal,setShowPublishModal] = useState(false);
@@ -12,14 +12,7 @@ export default function ViewAllForms() {
   useEffect(() => {
     const fetchForms = async () => {
       try {
-        const id = '9e26fea3-c30d-4834-b9d5-29a6e57cf660'
-        const res = await fetch("/api/v1/admin/forms",{
-         headers: {
-          "Content-Type": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify({id})
-        });
+        const res = await fetch("/api/v1/admin/forms");
         const data = await res.json();
 
         if (!res.ok) {
@@ -47,18 +40,20 @@ export default function ViewAllForms() {
             <span className="text-lg font-semibold text-gray-800">
               {form?.title || "Untitled Form"}
             </span>
+            {role === 'ADMIN' && 
             <div>
-            <button key={index} className="bg-green-400 border rounded-2xl text-white w-24 h-10 cursor-pointer" onClick={(e)=> {
-              e.stopPropagation();
-              setIdx(index) 
-              setShowPublishModal(true)}}>
-              Publish</button>
+              <button key={index} className="bg-green-400 border rounded-2xl text-white w-24 h-10 cursor-pointer" onClick={(e)=> {
+                e.stopPropagation();
+                setIdx(index) 
+                setShowPublishModal(true)}}>
+                Publish</button>
 
-            <button className="bg-blue-500 border rounded-2xl text-white w-24 h-10 cursor-pointer" onClick={(e)=>{
-              e.stopPropagation();
-              navigate('/builder',{state: {formData : forms[index], isEdit : true}})
-            }}>Edit Form</button>
-              </div>
+              <button className="bg-blue-500 border rounded-2xl text-white w-24 h-10 cursor-pointer" onClick={(e)=>{
+                e.stopPropagation();
+                navigate('/builder',{state: {formData : forms[index], isEdit : true}})
+              }}>Edit Form</button>
+            </div>
+            }
           </div>
         ))}
       </div>

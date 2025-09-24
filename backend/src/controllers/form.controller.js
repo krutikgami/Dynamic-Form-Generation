@@ -27,12 +27,15 @@ export const publishForm = async(req,res) => {
 
 export const getFormsById = async(req,res)=>{
     try {
-        const {id} = req.body;
-        const results =  await formService.getFormsByIdService(id);
-        return sendResponse(res, STATUS_CODES.CREATED, true, "Forms fetched successfully", results);
+        const {id,role} = req?.user;
+        const results =  await formService.getFormsByIdService(id,role);
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        return sendResponse(res, STATUS_CODES.OK, true, "Forms fetched successfully", results);
     } catch (error) {
-     console.error('Controller Error in getting Form',error)
-     return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+        console.error('Controller Error in getting Form',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }
 

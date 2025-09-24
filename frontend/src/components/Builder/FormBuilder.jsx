@@ -6,7 +6,7 @@ import {useNavigate} from 'react-router-dom'
 import PublishModal from "./PublishModal";
 import { handlePublish } from "../../utilities/services/publishService.js";
 
-export default function FormBuilder({ form, onFormSaved,isEdit }) {
+export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
     const navigate = useNavigate();
     const [schema,setSchema] =useState({
         title : 'New Form',
@@ -38,7 +38,7 @@ export default function FormBuilder({ form, onFormSaved,isEdit }) {
                 title : schema.title,
                 description : schema.description,
                 fields: schema.fields,
-                userId : '9e26fea3-c30d-4834-b9d5-29a6e57cf660'
+                userId : token?.id
             }
             const api = isEdit ? '/api/v1/admin/updateForm' : '/api/v1/admin/form'
             const res = await fetch(api,{

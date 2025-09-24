@@ -33,10 +33,15 @@ export const loginUser = async(req,res)=>{
         )
         res.cookie('authToken',token,{
             httpOnly: true,
+            secure : true,
             maxAge: 7200000
         })
-        res.cookie()
-        return sendResponse(res,STATUS_CODES.OK,true,'User LoggedIn Successfully!',validUser) 
+        res.cookie('authTokenClient',token,{
+            httpOnly : false,
+            secure : true,
+            maxAge : 7200000
+        })
+        return sendResponse(res,STATUS_CODES.OK,true,'User LoggedIn Successfully!') 
     } catch (error) {
         console.error('Controller Error in loginUser',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)

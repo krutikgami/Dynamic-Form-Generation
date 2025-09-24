@@ -88,16 +88,16 @@ export class FormService{
                     },
                     tx
                 )
+                
+                const existingUserIds = isFormExist.accessControls.map(a => a.userId);
 
-                if(isFormExist && isFormExist.accessControls.length > 0){
-                    await formRepo.deleteAccessControlByFormId({formId : id},tx);  
-                }
+                const newUserIds = userIds.filter(uid => !existingUserIds.includes(uid));
 
-                if(isFormExist){
-                    await formRepo.createAccessControl(
-                        userIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
-                        tx
-                    )
+                if (newUserIds.length > 0) {
+                await formRepo.createAccessControl(
+                    newUserIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
+                    tx
+                );
                 }
 
                 const isExists  = await formRepo.getFormAnalyticsById({formId : id},tx);
@@ -114,7 +114,7 @@ export class FormService{
         }
     } 
     
-    async getFormsByIdService(id){
+    async getFormsByIdService(id,role){
         try {
             if(!id){
                 throw new Error('UnAuthorized Access')
@@ -123,7 +123,7 @@ export class FormService{
             if(!isExists){
                 throw new Error('User not Found')
             }
-            return formRepo.getFormsById(id);
+            return formRepo.getFormsById(id,role);
         } catch (error) {
             console.error('Error in FormService.getFormsByIdService', error);
             throw error;

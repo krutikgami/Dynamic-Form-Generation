@@ -1,18 +1,25 @@
 import { NavLink } from "react-router-dom"
 
-export default function Header() {
-  const tabs = [
+export default function Header({role}) {
+  const adminTabs = [
     { id: "builder", label: "Builder", path: "/builder" },
     { id: "renderer", label: "Renderer", path: "/view" },
     { id: "manager", label: "Manager", path: "/manager" },
   ]
 
+  const userTabs = [
+    { id: "renderer", label: "Renderer", path: "/view" },
+    { id: "manager", label: "Manager", path: "/manager" },
+  ]
+
+  const selectedTab = role === 'ADMIN' ? adminTabs : userTabs
+  
   return (
     <header className="flex items-center justify-between bg-gray-800 px-6 py-4 shadow-md">
       <h1 className="text-2xl font-bold text-white">Dynamic Form Builder</h1>
 
       <nav className="flex space-x-4">
-        {tabs.map((tab) => (
+        {selectedTab.map((tab) => (
           <NavLink
             key={tab.id}
             to={tab.path}

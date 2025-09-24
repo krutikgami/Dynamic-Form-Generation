@@ -75,16 +75,39 @@ export class FormRepository{
       }
     }
     
-    async getFormsById(id){
+    async getFormsById(id,role){
       try {
-        return await prisma.form.findMany({
-          where :{
+        if(role==='ADMIN'){
+          return await prisma.form.findMany({
+            where :{
+              userId : id
+            },
+            include:{
+              accessControls : true
+            }
+          })
+        }
+        const formIds = await prisma.accessControl.findMany({
+          where : {
             userId : id
           },
-          include:{
-            accessControls : true
+          select :{
+            formId : true
           }
         })
+
+        const formattedFormIds = formIds.map((id)=>id.formId)
+
+        const forms = await Promise.all(
+          formattedFormIds.map(ids => 
+            prisma.form.findMany({
+              where: { id : ids },
+              include: { accessControls: true }
+            })
+          )
+        );
+        const flattenForms = forms.flat();
+        return flattenForms;
       } catch (error) {
         console.error('DB Error in FormRepository.getFormsById',error)
         throw new Error('Database error while getting Forms')
