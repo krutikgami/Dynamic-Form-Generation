@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { data } from "react-router-dom";
 
 export default function DynamicForm({ schema,isPreview }) {
   const [formData, setFormData] = useState({});
@@ -19,13 +18,13 @@ export default function DynamicForm({ schema,isPreview }) {
             }
             break;
 
-          case "minLength":
+          case "min":
             if (value && value.length < parseInt(ruleObj.ruleValue)) {
               error = ruleObj.message;
             }
             break;
             
-          case "maxLength":
+          case "max":
             if(value && value.length > parseInt(ruleObj.ruleValue)){
                 error = ruleObj.message;
             }

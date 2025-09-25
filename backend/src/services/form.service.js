@@ -180,22 +180,34 @@ export class FormService{
             if(!formExists){
                 throw new Error('Form doesn`t Exists');
             }
-            const maxSubmissionValue = formExists.maxSubmissions
-            if(maxSubmissionValue !== null){
-                if(formExists.submissionCount > maxSubmissionValue){
+            const maxSubmissionValue = formExists.maxSubmissions;
+            if (maxSubmissionValue !== null) {
+                if (formExists.submissionCount >= maxSubmissionValue) {
                     throw new Error('Form Max Submission limit reached!!');
                 }
             }
-            const start = formExists.startDate ? new Date(formExists.startDate) : null;
-            const end = formExists.endDate ? new Date(formExists.endDate) : null;
-            const now = new Date();
 
-            if (end !== null && now > end) {
-                throw new Error('Form Expired!!');
+            const nowDate = new Date();
+            nowDate.setHours(0, 0, 0, 0);
+
+            if (formExists.endDate) {
+                const endDate = new Date(formExists.endDate);
+                endDate.setHours(0, 0, 0, 0);
+
+                if (nowDate.getTime() > endDate.getTime()) {
+                    throw new Error('Form Expired!!');
+                }
             }
-            if (start !== null && now < start) {
-                throw new Error('Form Filling has not Started Yet');
+
+            if (formExists.startDate) {
+                const startDate = new Date(formExists.startDate);
+                startDate.setHours(0, 0, 0, 0);
+
+                if (nowDate.getTime() < startDate.getTime()) {
+                    throw new Error('Form Filling has not Started Yet');
+                }
             }
+
 
             return await prisma.$transaction(async (tx)=>{
                 const formSubmission = await formRepo.createFormSubmission({userData,userId},tx)
@@ -212,7 +224,7 @@ export class FormService{
     async viewFormSubmissionService({formId,userId}){
         try {
             if(!formId){
-                throw new Error('FormID is requird')
+                throw new Error('FormID is required')
             }
             const userExists = await userRepo.findUSerExists({id : userId})
             if(!userExists){
@@ -225,11 +237,13 @@ export class FormService{
                 if(!formExists){
                     throw new Error('Invalid Form Exists');
                 }
-                return await prisma.$transaction(async(tx)=>{
-                    const viewedForm = await formRepo.createFormView(formId,userId,tx)
-                    await formRepo.updateFormAnalytics({formId , data : {totalViews : {increment : 1},lastViewedAt : new Date()}},tx)
-                    return viewedForm;
-                })
+                if(!formExists.userId === userId){
+                    return await prisma.$transaction(async(tx)=>{
+                        const viewedForm = await formRepo.createFormView(formId,userId,tx)
+                        await formRepo.updateFormAnalytics({formId , data : {totalViews : {increment : 1},lastViewedAt : new Date()}},tx)
+                        return viewedForm;
+                    })
+                }
             }
         } catch (error) {
             console.error('Error in FormService.viewFormSubmissionService', error);

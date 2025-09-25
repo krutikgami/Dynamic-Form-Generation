@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom"
-
+import Cookie from "js-cookie"
 export default function Header({role}) {
   const adminTabs = [
     { id: "builder", label: "Builder", path: "/builder" },
@@ -34,6 +34,16 @@ export default function Header({role}) {
             {tab.label}
           </NavLink>
         ))}
+        <NavLink
+          onClick={() => {
+            Cookie.remove('authTokenClient');
+            Cookie.remove('authToken');
+            window.location.href = '/login';
+          }}
+          className="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition"
+        >
+          Logout
+        </NavLink>
       </nav>
     </header>
   )
