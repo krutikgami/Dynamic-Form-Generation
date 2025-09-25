@@ -50,6 +50,31 @@ export const updateForm = async(req,res)=>{
     }
 }
 
+export const formSubmissions = async(req,res)=>{
+    try {
+        const userData = req.body;
+        const userId = req?.user?.id;
+        const result = await formService.createFormSubmissionsService(userData,userId);
+        return sendResponse(res,STATUS_CODES.CREATED,true,"Submission entry created successfully",result);
+    } catch (error) {
+        console.error('Controller Error in formSubmissions',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
+export const viewForm = async(req,res)=>{
+    try {
+        const userId = req?.user?.id;
+        const {formId} = req.body;
+        console.log(userId);
+        await formService.viewFormSubmissionService({formId,userId});
+        return sendResponse(res,STATUS_CODES.OK,true,"Form Viewed Successfully",null);
+    } catch (error) {
+        console.error('Controller Error in viewForm',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
 // export const updateFormDetails = async(req,res)=>{
 //     try {
 //         const updateDetails = req.body;

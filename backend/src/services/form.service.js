@@ -88,7 +88,7 @@ export class FormService{
                     },
                     tx
                 )
-                
+
                 const existingUserIds = isFormExist.accessControls.map(a => a.userId);
 
                 const newUserIds = userIds.filter(uid => !existingUserIds.includes(uid));
@@ -154,6 +154,85 @@ export class FormService{
             });
         } catch (error) {
             console.error('Error in FormService.updateFormService', error);
+            throw error;
+        }
+    }
+
+    async createFormSubmissionsService(userData,userId){
+        try {
+            const {formId,data} = userData;
+            if(!formId){
+                throw new Error('Invalid form submission')
+            }
+            if(Array.isArray(data) && data.length === 0){
+                throw new Error('Please Fill the Form')
+            }
+            const alreadySubmitted = await formRepo.getFormSubmissionByUserId({userId,formId});
+            if(alreadySubmitted){
+                throw new Error('Data is already Submitted!!');
+            }
+            const userExists = await userRepo.findUSerExists({id : userId})
+            if(!userExists){
+                throw new Error('User doesn`t Exists or Deleted')
+            }
+            const id = formId
+            const formExists = await formRepo.getFormExists(id);
+            if(!formExists){
+                throw new Error('Form doesn`t Exists');
+            }
+            const maxSubmissionValue = formExists.maxSubmissions
+            if(maxSubmissionValue !== null){
+                if(formExists.submissionCount > maxSubmissionValue){
+                    throw new Error('Form Max Submission limit reached!!');
+                }
+            }
+            const start = formExists.startDate ? new Date(formExists.startDate) : null;
+            const end = formExists.endDate ? new Date(formExists.endDate) : null;
+            const now = new Date();
+
+            if (end !== null && now > end) {
+                throw new Error('Form Expired!!');
+            }
+            if (start !== null && now < start) {
+                throw new Error('Form Filling has not Started Yet');
+            }
+
+            return await prisma.$transaction(async (tx)=>{
+                const formSubmission = await formRepo.createFormSubmission({userData,userId},tx)
+                await formRepo.updateFormCount({formId},tx);
+                await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {increment : 1},lastSubmittedAt : new Date()}},tx)
+                return formSubmission;
+            })
+        } catch (error) {
+            console.error('Error in FormService.createFormSubmissionsService', error);
+            throw error;
+        }
+    }
+
+    async viewFormSubmissionService({formId,userId}){
+        try {
+            if(!formId){
+                throw new Error('FormID is requird')
+            }
+            const userExists = await userRepo.findUSerExists({id : userId})
+            if(!userExists){
+                throw new Error('Invalid User')
+            }
+            const isFormViewed = await formRepo.getFormViewed(formId,userId)
+            if(!isFormViewed){
+                const id = formId
+                const formExists = await formRepo.getFormExists(id);
+                if(!formExists){
+                    throw new Error('Invalid Form Exists');
+                }
+                return await prisma.$transaction(async(tx)=>{
+                    const viewedForm = await formRepo.createFormView(formId,userId,tx)
+                    await formRepo.updateFormAnalytics({formId , data : {totalViews : {increment : 1},lastViewedAt : new Date()}},tx)
+                    return viewedForm;
+                })
+            }
+        } catch (error) {
+            console.error('Error in FormService.viewFormSubmissionService', error);
             throw error;
         }
     }

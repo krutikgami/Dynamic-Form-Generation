@@ -26,4 +26,24 @@ export class UserRepository{
             throw new Error('Database error while finding user exists');
         }
     }
+
+    async findEmailByUser(q){
+        try {
+            return await prisma.user.findMany({
+                where :{
+                    email : {
+                        contains : q,
+                        mode : 'insensitive'
+                    }
+                },
+                select : {
+                    id : true,
+                    email : true
+                }
+            })
+        } catch (error) {
+            console.error('DB error for User Repository.findEmailByUser',error)
+            throw new Error('Database error while finding EmailByUser');
+        }
+    }
 }

@@ -83,7 +83,17 @@ export class FormRepository{
               userId : id
             },
             include:{
-              accessControls : true
+              accessControls : {
+                select :{
+                  userId : true,
+                  formId: true,
+                  user :{
+                    select :{
+                      email : true
+                    }
+                  }
+                }
+              }
             }
           })
         }
@@ -101,7 +111,11 @@ export class FormRepository{
         const forms = await Promise.all(
           formattedFormIds.map(ids => 
             prisma.form.findMany({
-              where: { id : ids },
+              where: { id : ids,
+                status : {
+                notIn : ['DRAFT','INACTIVE']
+              } 
+            },
               include: { accessControls: true }
             })
           )
@@ -157,6 +171,96 @@ export class FormRepository{
       } catch (error) {
         console.error('DB Error in FormRepository.updateAccessControl',error)
         throw new Error('Database error while updating AccessControl Forms')
+      }
+    }
+
+    async createFormSubmission({userData,userId},client=tx){
+      try {
+        const {formId,data} = userData;
+        return await client.submission.create({
+          data :{
+            formId,
+            userId,
+            data
+          }
+        }) 
+      } catch (error) {
+        console.error('DB Error in FormRepository.createFormSubmission',error)
+        throw new Error('Database error while createFormSubmission')
+      }
+    }
+
+    async getFormSubmissionByUserId({userId,formId}){
+      try {
+        return await prisma.submission.findFirst({
+          where : {
+            userId,
+            formId
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.getFormSubmissionByUserId',error)
+        throw new Error('Database error while getFormSubmissionByUserId')
+      }
+    }
+
+    async updateFormCount({formId},client=tx){
+      try {
+        return await client.form.update({
+          where : {
+            id : formId
+          },
+          data : {
+            submissionCount : {
+              increment : 1
+            }
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.updateFormCount',error)
+        throw new Error('Database error while updateFormCount')
+      }
+    }
+
+    async updateFormAnalytics({formId,data},client = tx){
+      try {
+        return await client.formAnalytics.update({
+          where : {
+            formId
+          },
+          ...(data ? {data} :{}) 
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.updateFormAnalytics',error)
+        throw new Error('Database error while updateFormAnalytics')
+      }
+    }
+
+    async createFormView(formId,userId,client=tx){
+      try {
+        return await client.formView.create({
+          data:{
+            formId,
+            userId
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.createFormView',error)
+        throw new Error('Database error while createFormView')
+      }
+    }
+
+    async getFormViewed(formId,userId){
+      try {
+        return await prisma.formView.findFirst({
+          where : {
+            formId,
+            userId
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.getFormViewed',error)
+        throw new Error('Database error while getFormViewed')
       }
     }
 

@@ -27,6 +27,27 @@ export default function ViewAllForms({role}) {
     fetchForms();
   }, []);
 
+  const handleView = async(formId)=>{
+    console.log(formId)
+    try {
+      const response = await fetch('/api/v1/admin/form/view',{
+        method : 'POST',
+        headers :{
+          'Content-Type' : 'application/json'
+        },
+        body : JSON.stringify({formId})
+      })
+      const data = await response.json();
+      if(!response.ok){
+        alert(data.message)
+      }
+      console.log(data)
+    } catch (error) {
+      console.error('Error in ViewForm',error)
+      alert('Error: ',error.message)
+    }
+  } 
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">All Forms</h1>
@@ -35,7 +56,10 @@ export default function ViewAllForms({role}) {
           <div
             key={form.id}
             className="bg-white shadow-md rounded-lg flex items-center justify-evenly h-32 cursor-pointer border hover:shadow-lg transition"
-            onClick={() => navigate('/renderer',{state:{schema: form}})}
+            onClick={() => {
+              handleView(form.id)
+              navigate('/renderer',{state:{schema: form}})
+            }}
           >
             <span className="text-lg font-semibold text-gray-800">
               {form?.title || "Untitled Form"}

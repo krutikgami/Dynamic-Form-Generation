@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { data } from "react-router-dom";
 
 export default function DynamicForm({ schema,isPreview }) {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
-
+  console.log(schema);
+   
   const validateField = (field, value) => {
     let error = "";
 
@@ -55,7 +57,7 @@ export default function DynamicForm({ schema,isPreview }) {
     let newErrors = {};
     const fields = Array.isArray(schema?.schema) ? schema?.schema : schema?.fields || [];
     fields.forEach((field) => {
-      const value = formData[field.name];
+      const value = formData[field.label];
       const error = validateField(field, value);
       if (error) newErrors[field.name] = error;
     });
@@ -63,18 +65,34 @@ export default function DynamicForm({ schema,isPreview }) {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newErrors = validateForm();
+  const handleSubmit = async (e) => {
+   try {
+     e.preventDefault();
+     const newErrors = validateForm();
 
-    if (Object.keys(newErrors).length === 0) {
-      alert("Form submitted!");
-      console.log("Values: ", formData);
-    }
+     if (Object.keys(newErrors).length === 0) { 
+      console.log(formData)
+        const response = await fetch('/api/v1/admin/form/submission',{
+          method : 'POST',
+          headers :{
+            'Content-Type' : 'application/json'
+          },
+          body : JSON.stringify({formId : schema.id, data : [formData]})
+        }) 
+        const data = await response.json();
+        if(!response.ok){
+          alert(data.message)
+        }
+        alert(data.message)
+      }
+   } catch (error) {
+      console.error('Error in submitting Form',error.message)
+      alert(error.message)
+   }
   };
 
   const handleCheckboxChange = (field, option) => {
-    const prevVal = formData[field.name] || [];
+    const prevVal = formData[field.label] || [];
     const newValues = prevVal.includes(option)
       ? prevVal.filter((val) => val !== option)
       : [...prevVal, option];
@@ -83,7 +101,7 @@ export default function DynamicForm({ schema,isPreview }) {
   };
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field.name]: value }));
+    setFormData((prev) => ({ ...prev, [field.label]: value }));
     const error = validateField(field, value);
     setErrors((prev) => ({
       ...prev,
@@ -104,9 +122,9 @@ export default function DynamicForm({ schema,isPreview }) {
             <label className="block mb-1 font-medium">{field.label}</label>
             <input
               type={field.type}
-              name={field.name}
+              name={field.label}
               placeholder={field.placeholder}
-              value={formData[field.name] || ""}
+              value={formData[field.label] || ""}
               onChange={(e) => handleChange(field, e.target.value)}
               className="w-full p-2 border rounded"
             />
@@ -130,8 +148,8 @@ export default function DynamicForm({ schema,isPreview }) {
                     value={val}
                     checked={
                       field.type === "checkbox"
-                        ? (formData[field.name] || []).includes(val)
-                        : formData[field.name] === val
+                        ? (formData[field.label] || []).includes(val)
+                        : formData[field.label] === val
                     }
                     onChange={(e) =>
                       field.type === "checkbox"
@@ -155,7 +173,7 @@ export default function DynamicForm({ schema,isPreview }) {
             <label className="block mb-1 font-medium">{field.label}</label>
             <select
               name={field.name}
-              value={formData[field.name] || ""}
+              value={formData[field.label] || ""}
               onChange={(e) => handleChange(field, e.target.value)}
               className="w-full p-2 border rounded"
             >
@@ -196,7 +214,7 @@ export default function DynamicForm({ schema,isPreview }) {
             <textarea
               name={field.name}
               placeholder={field.placeholder}
-              value={formData[field.name] || ""}
+              value={formData[field.label] || ""}
               onChange={(e) => handleChange(field, e.target.value)}
               className="w-full p-2 border rounded"
             />

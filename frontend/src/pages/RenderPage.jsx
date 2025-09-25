@@ -11,7 +11,7 @@ export default function RenderPage(){
 
     useEffect(()=>{
         setSchema(stateSchema)
-    },[])
+    },[stateSchema])
 
     console.log("Render Page Data :",schema);
     return(

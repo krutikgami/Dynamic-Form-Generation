@@ -44,4 +44,16 @@ export class UserService{
           throw error;
         }
     }
+
+    async getEmailSearchByUSerService(q){
+        try {
+            if(!q){
+                return;
+            }
+            return userRepo.findEmailByUser(q);
+        } catch (error) {
+          console.error('Error in User Service.getEmailSearchByUSerService',error)
+          throw error;
+        }
+    }
 }

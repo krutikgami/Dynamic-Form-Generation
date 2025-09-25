@@ -47,3 +47,14 @@ export const loginUser = async(req,res)=>{
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }
+
+export const getEmailSearchByUSer=async(req,res)=>{
+    try {
+        const {q} = req.query;
+        const results = await userService.getEmailSearchByUSerService(q);
+        return sendResponse(res,STATUS_CODES.OK,true,'Users Fetched Successfully',results) 
+    } catch (error) {
+        console.error('Controller Error in getEmailSearchByUSer',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
