@@ -28,7 +28,8 @@ export const publishForm = async(req,res) => {
 export const getFormsById = async(req,res)=>{
     try {
         const {id,role} = req?.user;
-        const results =  await formService.getFormsByIdService(id,role);
+        const{q} = req.query;
+        const results =  await formService.getFormsByIdService(id,role,q);
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
@@ -71,6 +72,18 @@ export const viewForm = async(req,res)=>{
         return sendResponse(res,STATUS_CODES.OK,true,"Form Viewed Successfully",null);
     } catch (error) {
         console.error('Controller Error in viewForm',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
+
+export const getFormSubmissionData = async(req,res)=>{
+    try {
+        const {formId} = req.body;
+        const result = await formService.getFormSubmissionService(formId);
+        return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",result)
+    } catch (error) {
+        console.error('Controller Error in getFormSubmissionData',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }

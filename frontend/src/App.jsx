@@ -7,6 +7,8 @@ import Login from "./pages/LoginPage.jsx"
 import ProtectedAdmin from "./pages/PotectedAdmin.jsx"
 import { getCookie } from "./utilities/getCookie.js"
 import { decodeToken } from "./utilities/decodeToken.js"
+import FormManager from "./pages/FormManager.jsx"
+
 function AppLayout() {
   const token = getCookie() || null;
   const decoded = token ? decodeToken(token) : null;
@@ -33,6 +35,7 @@ function AppLayout() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/builder" element={<ProtectedAdmin role={decoded?.role}><BuilderPage token={decoded} /> </ProtectedAdmin>} />
+          <Route path="/manager" element={<ProtectedAdmin role={decoded?.role}><FormManager /> </ProtectedAdmin>} />
           <Route path="/renderer" element={<RendererPage />} />
           <Route path="/view" element={<ViewAllForms role={decoded?.role}/>} />
         </Routes>

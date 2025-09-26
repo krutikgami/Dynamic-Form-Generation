@@ -9,6 +9,7 @@ export class FormService{
     async createFormService(formData){
         try {
             const {title,description,fields,userId} = formData;
+            console.log(title);
             if(!title || title.trim().length === 0){
                 throw new Error('Form title is required')
             }
@@ -114,7 +115,7 @@ export class FormService{
         }
     } 
     
-    async getFormsByIdService(id,role){
+    async getFormsByIdService(id,role,q){
         try {
             if(!id){
                 throw new Error('UnAuthorized Access')
@@ -123,7 +124,7 @@ export class FormService{
             if(!isExists){
                 throw new Error('User not Found')
             }
-            return formRepo.getFormsById(id,role);
+            return formRepo.getFormsById(id,role,q);
         } catch (error) {
             console.error('Error in FormService.getFormsByIdService', error);
             throw error;
@@ -247,6 +248,47 @@ export class FormService{
             }
         } catch (error) {
             console.error('Error in FormService.viewFormSubmissionService', error);
+            throw error;
+        }
+    }
+
+    async getFormSubmissionService(formId){
+        try {
+            const formExists = await formRepo.getFormExists(formId)
+            if(!formExists){
+                throw new Error('Form Doesn`t exists')
+            }
+            const result = await formRepo.getFormSubmissionData(formId)
+            console.log(result)
+            const tableHeadings = ['ID']
+            result.schema.map((col,idx)=>{
+                if (!col?.name.startsWith('button')) {
+                    tableHeadings.push(col.label)
+                }
+            })
+            const submissions = result.submissions.map((submission) => {
+                const row = {
+                    id: submission.id
+                };
+                result.schema.forEach((col) => {
+                    if (!col?.name.startsWith('button')) {
+                        const label = col.label;
+                        const fieldData = submission.data[0]?.[label] || null;
+                        row[label] = fieldData;
+                    }
+                });
+
+             return row;
+            });
+
+        return {
+            title: result.title,
+            description: result.description,
+            tableHeadings,
+            submissions
+        };
+        } catch (error) {
+            console.error('Error in FormService.getFormSubmissionService', error);
             throw error;
         }
     }

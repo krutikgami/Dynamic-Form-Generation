@@ -75,13 +75,12 @@ export class FormRepository{
       }
     }
     
-    async getFormsById(id,role){
+    async getFormsById(id,role,q){
       try {
         if(role==='ADMIN'){
+          let where = q !== 'All' ? { userId : id,status: q} : { userId : id}
           return await prisma.form.findMany({
-            where :{
-              userId : id
-            },
+            where,
             include:{
               accessControls : {
                 select :{
@@ -93,8 +92,14 @@ export class FormRepository{
                     }
                   }
                 }
+              },
+              analytics :{
+                select :{
+                  totalViews : true,
+                  totalSubmissions : true
+                }
               }
-            }
+            },
           })
         }
         const formIds = await prisma.accessControl.findMany({
@@ -261,6 +266,22 @@ export class FormRepository{
       } catch (error) {
         console.error('DB Error in FormRepository.getFormViewed',error)
         throw new Error('Database error while getFormViewed')
+      }
+    }
+
+    async getFormSubmissionData(formId){
+      try {
+        return await prisma.form.findUnique({
+          where : {
+            id : formId
+          },
+          include : {
+            submissions : true
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.getFormSubmissionData',error)
+        throw new Error('Database error while getFormSubmissionData')
       }
     }
 

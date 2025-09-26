@@ -2,31 +2,30 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PublishModal from "../components/Builder/PublishModal";
 import { handlePublish } from "../utilities/services/publishService.js";
+import { formsService } from "../utilities/services/formsService.js";
+import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
 
 export default function ViewAllForms({role}) {
   const [forms, setForms] = useState([]);
   const [idx,setIdx] = useState(null);
   const [showPublishModal,setShowPublishModal] = useState(false);
+  const [value,setValue] = useState('All')
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchForms = async () => {
+
+    const fetchForms = async(value)=>{
       try {
-        const res = await fetch("/api/v1/admin/forms");
-        const data = await res.json();
-
-        if (!res.ok) {
-          console.error('Error in fetching forms')
-        }
-        setForms(data.data || []); 
-      } catch (err){
-        console.error('Error fetching Forms',err.message)
+        const data = await formsService(value)
+        setForms(data || [])
+      } catch (error) {
+        console.error('Error Fetching Forms',error)
       }
-    };
+    } 
 
-    fetchForms();
-  }, []);
-
+    useEffect(()=>{
+      fetchForms(value)
+    },[value])
+   
   const handleView = async(formId)=>{
     console.log(formId)
     try {
@@ -50,7 +49,10 @@ export default function ViewAllForms({role}) {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">All Forms</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold mb-6">All Forms</h1>
+        <FilterByStatus onChange={setValue} />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {forms.map((form,index) => (
           <div
