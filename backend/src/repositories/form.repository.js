@@ -121,7 +121,13 @@ export class FormRepository{
                 notIn : ['DRAFT','INACTIVE']
               } 
             },
-              include: { accessControls: true }
+              include: { 
+                accessControls: {
+                  where :{
+                    userId : id 
+                  }
+                } 
+              }
             })
           )
         );
@@ -166,11 +172,12 @@ export class FormRepository{
       }
     }
 
-    async deleteAccessControlByFormId({formId},client=tx){
+    async deleteAccessControlByUserID({formId,userId},client=tx){
       try {
         return await client.accessControl.deleteMany({
           where :{
-            formId
+            formId,
+            userId
           }
         })
       } catch (error) {
@@ -276,7 +283,19 @@ export class FormRepository{
             id : formId
           },
           include : {
-            submissions : true
+            submissions : {
+              select : {
+                id : true,
+                formId : true,
+                userId : true,
+                data : true,
+                user : {
+                  select : {
+                    email : true
+                  }
+                }
+              }
+            }
           }
         })
       } catch (error) {
@@ -284,25 +303,4 @@ export class FormRepository{
         throw new Error('Database error while getFormSubmissionData')
       }
     }
-
-    // async updateFormDetails(updateDetails,client=tx){
-    //   try {
-    //     const {id,status,maxSubmissions,endDate,startDate} = updateDetails;
-    //     return await client.form.update({
-    //       where : {
-    //        id
-    //       },
-    //       data :{
-    //        startDate,
-    //        endDate,
-    //        maxSubmissions,
-    //        status
-    //       }
-    //     })
-    //   } catch (error) {
-    //     console.error('DB Error in FormRepository.updateFormDetails',error)
-    //     throw new Error('Database error while updating form details Forms')
-    //   }
-    // }
-
 }

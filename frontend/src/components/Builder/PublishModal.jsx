@@ -56,6 +56,23 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
     }
   }, [textareaValue]);
 
+  const handleTextareaChange = (e) => {
+    const value = e.target.value;
+    setTextareaValue(value);
+
+    const emails = value
+      .split(",")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+      
+    const updatedUsers = selectedUsers.filter((u) =>
+      emails.includes(u.email)
+    );
+
+    setSelectedUsers(updatedUsers);
+  };
+
+
   const handleSuggestionClick = (user) => {
     if (!selectedUsers.find((u) => u.id === user.id)) {
       setSelectedUsers([...selectedUsers, user]);
@@ -75,7 +92,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       maxSubmissions: maxSubmissions ? parseInt(maxSubmissions) : null,
       startDate: startDate || null,
       endDate: endDate || null,
-      userIds: selectedUsers.map((u) => u.id), // only IDs
+      userIds: selectedUsers.map((u) => u.id),
     };
     onPublish(payload, onClose);
   };
@@ -138,7 +155,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
               className="w-full border rounded-md px-3 py-2"
               placeholder="Type emails, suggestions will appear..."
               value={textareaValue}
-              onChange={(e) => setTextareaValue(e.target.value)}
+              onChange={handleTextareaChange}
             />
             {suggestions.length > 0 && (
               <ul className="absolute bg-white border rounded-md shadow-md mt-1 w-full max-h-40 overflow-y-auto z-10">

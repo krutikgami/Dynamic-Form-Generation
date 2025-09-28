@@ -8,9 +8,10 @@ export const sendResponse = (res, statusCode = STATUS_CODES.OK, success = true, 
     });
 }
 
-export const sendError = (res, statusCode = STATUS_CODES.SERVERERROR, success= false, message = 'Internal Server Error') => {
+export const sendError = (res, statusCode = STATUS_CODES.SERVERERROR, success= false, message = 'Internal Server Error', errors = []) => {
     return res.status(statusCode).json({
         success,
-        message
+        message,
+        errors
     });
 }

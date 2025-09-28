@@ -49,10 +49,12 @@ export default function ViewAllForms({role}) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold mb-6">All Forms</h1>
-        <FilterByStatus onChange={setValue} />
-      </div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold mb-6">All Forms</h1>
+          {role === 'ADMIN' &&
+            <FilterByStatus onChange={setValue} />
+          }
+        </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {forms.map((form,index) => (
           <div

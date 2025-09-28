@@ -1,12 +1,12 @@
 import { FormService } from '../services/form.service.js';
 import { STATUS_CODES } from '../utilities/constants/statusCodeConstants.js';
 import {sendError,sendResponse} from '../utilities/response.js'
-
+import {getForms} from '../resources/UserResources.js'
+import {createUserRole} from '../utilities/constants/codeConstants.js'
 const formService = new FormService();
 export const createForm = async(req,res) =>{
     try {
-     const formData = req.body;
-     const result = await formService.createFormService(formData);
+     const result = await formService.createFormService(req.body,req?.user?.id);
      return sendResponse(res, STATUS_CODES.CREATED, true, "Form created successfully", result);
     } catch (error) {
      console.error('Controller Error in Create Form',error)
@@ -16,8 +16,7 @@ export const createForm = async(req,res) =>{
 
 export const publishForm = async(req,res) => {
     try {
-        const formData = req.body;
-        const result = await formService.publishFormService(formData);
+        const result = await formService.publishFormService(req.body);
         return sendResponse(res, STATUS_CODES.OK, true, "Form Published successfully", result);
     } catch (error) {
      console.error('Controller Error in publish Form',error)
@@ -33,7 +32,8 @@ export const getFormsById = async(req,res)=>{
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
-        return sendResponse(res, STATUS_CODES.OK, true, "Forms fetched successfully", results);
+        const data = role === createUserRole ? results : results.map(form => getForms(form));
+        return sendResponse(res, STATUS_CODES.OK, true, "Forms fetched successfully", data);
     } catch (error) {
         console.error('Controller Error in getting Form',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
@@ -42,8 +42,7 @@ export const getFormsById = async(req,res)=>{
 
 export const updateForm = async(req,res)=>{
     try {
-        const formData = req.body;
-        const updatedForm = await formService.updateFormService(formData);
+        const updatedForm = await formService.updateFormService(req.body);
         return sendResponse(res, STATUS_CODES.OK, true, "Forms Updated successfully", updatedForm);
     } catch (error) {
      console.error('Controller Error in updating Form',error)
@@ -53,9 +52,8 @@ export const updateForm = async(req,res)=>{
 
 export const formSubmissions = async(req,res)=>{
     try {
-        const userData = req.body;
         const userId = req?.user?.id;
-        const result = await formService.createFormSubmissionsService(userData,userId);
+        const result = await formService.createFormSubmissionsService(req.body,userId);
         return sendResponse(res,STATUS_CODES.CREATED,true,"Submission entry created successfully",result);
     } catch (error) {
         console.error('Controller Error in formSubmissions',error)
@@ -87,14 +85,3 @@ export const getFormSubmissionData = async(req,res)=>{
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }
-
-// export const updateFormDetails = async(req,res)=>{
-//     try {
-//         const updateDetails = req.body;
-//         const result = await formService.updateDetailsFormService(updateDetails);
-//         return sendResponse(res,STATUS_CODES.OK,true,'Form Details update successfully',result);
-//     } catch (error) {
-//         console.error('Controller Error in updateFormDetails',error)
-//         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message);
-//     }
-// }

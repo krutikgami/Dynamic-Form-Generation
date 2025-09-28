@@ -1,26 +1,14 @@
 import {FormRepository} from '../repositories/form.repository.js'
 import { UserRepository } from '../repositories/user.repository.js';
 import { prisma } from '../utilities/prisma.constants.js';
-
+import {status,role} from '../utilities/constants/codeConstants.js'
 const formRepo = new FormRepository();
 const userRepo = new UserRepository();
 
 export class FormService{
-    async createFormService(formData){
+    async createFormService(formData,userId){
         try {
-            const {title,description,fields,userId} = formData;
-            console.log(title);
-            if(!title || title.trim().length === 0){
-                throw new Error('Form title is required')
-            }
-
-            if(!Array.isArray(fields) ||fields.length === 0){
-                throw new Error('Atleast one Field is required')
-            }
-
-            if(!userId){
-                throw new Error('User Id is required')
-            }
+            const {title,description,fields} = formData;
             
             const isUserIdExists = await userRepo.findUSerExists({id: userId});
 
@@ -32,7 +20,7 @@ export class FormService{
                 title,
                 description,
                 schema : fields,
-                status : "DRAFT",
+                status,
                 userId,
                 createdById: userId
             })
@@ -46,32 +34,8 @@ export class FormService{
         try {
             const { maxSubmissions, startDate, endDate, id, userIds,status } = formData;
 
-            if (!id) {
-            throw new Error('Invalid Request to publish Form');
-            }
-
-            if (!Array.isArray(userIds) || userIds.length === 0) {
-            throw new Error('User ids for access control is required');
-            }
-
             const start = new Date(startDate);
             const end = new Date(endDate);
-
-            if (isNaN(start.getTime())) {
-                throw new Error('Invalid startDate format');
-            }
-            if (isNaN(end.getTime())) {
-                throw new Error('Invalid endDate format');
-            }
-
-            let maxSubs = null;
-            if (maxSubmissions !== null && maxSubmissions !== undefined) {
-                if (Number.isInteger(maxSubmissions)) {
-                    maxSubs = maxSubmissions;
-                } else {
-                    throw new Error('maxSubmissions must be an integer or null');
-                }
-            }
 
             const isFormExist = await formRepo.getFormExists(id);
             if (!isFormExist) {
@@ -82,7 +46,7 @@ export class FormService{
                 const publishedForm = await formRepo.publishForm(
                     {
                     id,
-                    maxSubmissions: maxSubs,
+                    maxSubmissions: maxSubmissions || null,
                     startDate: start,
                     endDate: end,
                     status
@@ -95,10 +59,19 @@ export class FormService{
                 const newUserIds = userIds.filter(uid => !existingUserIds.includes(uid));
 
                 if (newUserIds.length > 0) {
-                await formRepo.createAccessControl(
-                    newUserIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
-                    tx
-                );
+                    await formRepo.createAccessControl(
+                        newUserIds.map(uid => ({ formId: id, userId: uid, role })),
+                        tx
+                    );
+                }
+
+                const removeUserIds = existingUserIds.filter((uid) => !userIds.includes(uid));1
+                console.log(removeUserIds);
+
+                if (removeUserIds.length > 0) {
+                    for (const uid of removeUserIds) {
+                        await formRepo.deleteAccessControlByUserID({ formId: id, userId: uid }, tx);
+                    }
                 }
 
                 const isExists  = await formRepo.getFormAnalyticsById({formId : id},tx);
@@ -134,13 +107,6 @@ export class FormService{
     async updateFormService(formData){
         try {
             const {id,title,description,fields,userId} = formData;
-            if(!title || title.trim().length === 0){
-                throw new Error('Form title is required')
-            }
-
-            if(!Array.isArray(fields) ||fields.length === 0){
-                throw new Error('Atleast one Field is required')
-            }
 
             const isFormExists = await formRepo.getFormExists(id);
             if(!isFormExists){
@@ -162,12 +128,7 @@ export class FormService{
     async createFormSubmissionsService(userData,userId){
         try {
             const {formId,data} = userData;
-            if(!formId){
-                throw new Error('Invalid form submission')
-            }
-            if(Array.isArray(data) && data.length === 0){
-                throw new Error('Please Fill the Form')
-            }
+
             const alreadySubmitted = await formRepo.getFormSubmissionByUserId({userId,formId});
             if(alreadySubmitted){
                 throw new Error('Data is already Submitted!!');
@@ -238,7 +199,7 @@ export class FormService{
                 if(!formExists){
                     throw new Error('Invalid Form Exists');
                 }
-                if(!formExists.userId === userId){
+                if(formExists.userId !== userId){
                     return await prisma.$transaction(async(tx)=>{
                         const viewedForm = await formRepo.createFormView(formId,userId,tx)
                         await formRepo.updateFormAnalytics({formId , data : {totalViews : {increment : 1},lastViewedAt : new Date()}},tx)
@@ -254,13 +215,14 @@ export class FormService{
 
     async getFormSubmissionService(formId){
         try {
-            const formExists = await formRepo.getFormExists(formId)
+            const formExists = await formRepo.getFormExists(formId);
             if(!formExists){
                 throw new Error('Form Doesn`t exists')
             }
             const result = await formRepo.getFormSubmissionData(formId)
             console.log(result)
             const tableHeadings = ['ID']
+
             result.schema.map((col,idx)=>{
                 if (!col?.name.startsWith('button')) {
                     tableHeadings.push(col.label)
@@ -268,7 +230,7 @@ export class FormService{
             })
             const submissions = result.submissions.map((submission) => {
                 const row = {
-                    id: submission.id
+                    id: submission.user.email
                 };
                 result.schema.forEach((col) => {
                     if (!col?.name.startsWith('button')) {
@@ -292,48 +254,4 @@ export class FormService{
             throw error;
         }
     }
-
-    // async updateDetailsFormService(updateDetails){
-    //     try {
-    //         const {id,userId,status,maxSubmissions,endDate,startDate,userIds} = updateDetails;
-    //         const isFormExists = await formRepo.getFormExists(id)
-    //         if(!isFormExists){
-    //             throw new Error('Form Doesn`t exists')
-    //         }
-    //         const isuserExists = await userRepo.findUSerExists({id : userId});
-    //         if(!isuserExists){
-    //             throw new Error('UnAuthorised Access')
-    //         }
-    //         if(!Number.isInteger(maxSubmissions)){
-    //             throw new Error('MaxSubmissions must be an Integer')
-    //         }
-
-    //         const start = new Date(startDate);
-    //         const end = new Date(endDate);
-
-    //         if (isNaN(start.getTime())) {
-    //             throw new Error('Invalid startDate format');
-    //         }
-    //         if (isNaN(end.getTime())) {
-    //             throw new Error('Invalid endDate format');
-    //         }
-
-    //         return await prisma.$transaction(async(tx)=>{
-    //             const updateFormDetails  = await formRepo.updateFormDetails(updateDetails,tx)
-
-    //             await formRepo.deleteAccessControlUserId({formId : id},tx)
-
-    //             await formRepo.createAccessControl(
-    //                 userIds.map(uid => ({ formId: id, userId: uid, role: 'USER' })),
-    //                 tx
-    //             )
-
-    //             return updateFormDetails;
-    //         })
-    //     } catch (error) {
-    //         console.error('Error in FormService.updateDetails',error);
-    //         throw error;
-    //     }
-    // }
-
 }
