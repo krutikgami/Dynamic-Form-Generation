@@ -207,7 +207,8 @@ export class FormRepository{
         return await prisma.submission.findFirst({
           where : {
             userId,
-            formId
+            formId,
+            deleted_at : null
           }
         })
       } catch (error) {
@@ -305,17 +306,25 @@ export class FormRepository{
       }
     }
 
-    async updateFormSubmission(formData){
+    async updateFormSubmission(formId,userId,data){
       try {
-        return await prisma.submission.update({
-          where : {
-            formId : formData.formId,
-            userId : formData.userId
-          },
-          data :{
-            data : formData.data
+        console.log(formId)
+        console.log(userId)
+        const submission = await prisma.submission.findFirst({
+          where: {
+            formId,
+            userId,
           }
-        })
+        });
+
+        console.log(submission)
+
+      if (!submission) throw new Error("Submission not found");
+
+      return await prisma.submission.update({
+        where: { id: submission.id },
+        data: { data: [data] }
+      });
       } catch (error) {
         console.error('DB Error in FormRepository.updateFormSubmission',error)
         throw new Error('Database error while updateFormSubmission')
@@ -338,6 +347,39 @@ export class FormRepository{
       } catch (error) {
         console.error('DB Error in FormRepository.getFormSchemaById',error)
         throw new Error('Database error while getFormSchemaById')
+      }
+    }
+
+    async deleteUserSubmission(formId,userId){
+      try {
+        await prisma.submission.updateMany({
+          where: { formId, userId, deleted_at: null },
+          data: { deleted_at: new Date() },
+        });
+
+      await prisma.form.update({
+        where: { id: formId },
+        data: {
+          submissionCount: { decrement: 1 },
+        },
+      });
+
+      await prisma.formAnalytics.update({
+        where: { formId },
+        data: {
+          totalSubmissions: { decrement: 1 },
+          totalViews: { decrement: 1 },
+        },
+      });
+
+      await prisma.formView.deleteMany({
+        where: { formId, userId },
+      });
+
+    return { success: true };
+      } catch (error) {
+        console.error('DB Error in FormRepository.deleteUserSubmission',error)
+        throw new Error('Database error while deleteUserSubmission')
       }
     }
 }

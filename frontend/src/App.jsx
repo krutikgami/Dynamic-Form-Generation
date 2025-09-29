@@ -43,7 +43,7 @@ function AppLayout() {
           <Route path="/userrenderer" element={<RendererPage />} />
           <Route path="/view" element={<ViewAllForms role={decoded?.role}/>} />
           <Route path="/usermanager" element={<UserFormManager />} />
-          <Route path="/viewData" element={<ViewUserData />} />
+          <Route path="/viewData" element={<ViewUserData  role={decoded?.role}/>} />
         </Routes>
       </div>
     </div>

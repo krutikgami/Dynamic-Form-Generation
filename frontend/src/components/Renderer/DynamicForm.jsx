@@ -1,10 +1,18 @@
+import { useEffect } from "react";
 import { useState } from "react";
 
-export default function DynamicForm({ schema,isPreview }) {
+export default function DynamicForm({ schema,isPreview,isEdit,submissionData }) {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   console.log(schema);
+  console.log(submissionData)
    
+   useEffect(() => {
+    if (isEdit && submissionData) {
+      setFormData(submissionData || {});
+    }
+  }, [isEdit, submissionData]);
+
   const validateField = (field, value) => {
     let error = "";
 
@@ -71,13 +79,16 @@ export default function DynamicForm({ schema,isPreview }) {
 
      if (Object.keys(newErrors).length === 0) { 
       console.log(formData)
+      const payload = isEdit
+        ? { formId: schema.id, data: formData, userId: submissionData?.id }
+        : { formId: schema.id, data: [formData] };
         const response = await fetch('/api/v1/admin/form/submission',{
-          method : 'POST',
+          method : isEdit ? 'PATCH' : 'POST',
           headers :{
             'Content-Type' : 'application/json'
           },
-          body : JSON.stringify({formId : schema.id, data : [formData]})
-        }) 
+          body : JSON.stringify(payload)
+        })
         const data = await response.json();
         if(!response.ok){
           alert(data.message)
@@ -202,7 +213,7 @@ export default function DynamicForm({ schema,isPreview }) {
             }}
             className="rounded-lg shadow-md"
           >
-            {field.label}
+             {isEdit ? "Update" : field.label}
           </button>
         );
 

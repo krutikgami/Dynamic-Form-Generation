@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import TableRender from "../components/Manager/TableRender";
-export default function ViewUserData() {
+export default function ViewUserData({ role }) {
   const location = useLocation();
   const { formId } = location.state || {};
   const [formData, setFormData] = useState(null);
@@ -44,6 +44,9 @@ export default function ViewUserData() {
         title={formData.title}
         description={formData.description}
         submissionData={formData.submissions}
+        id={formData.id}
+        role={role}
+        viewOperation={true}
      />
     </div>
   );

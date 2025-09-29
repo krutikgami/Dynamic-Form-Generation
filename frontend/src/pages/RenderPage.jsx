@@ -7,6 +7,8 @@ export default function RenderPage() {
   const location = useLocation();
   const formId = location?.state?.formId;
   const isPreview = location?.state?.isPreview;
+  const submissionData = location?.state?.submissionData;
+  const isEdit = location?.state?.isEdit;
   const [schema, setSchema] = useState(null);
 
   useEffect(() => {
@@ -14,7 +16,7 @@ export default function RenderPage() {
       try {
         const response = await formSchemaService(formId);
         console.log("Form schema response:", response);
-        setSchema(response); 
+        setSchema(response);
       } catch (error) {
         console.error("Error fetching form schema:", error);
         setSchema(null);
@@ -28,7 +30,14 @@ export default function RenderPage() {
     <div className="flex justify-center items-center w-full">
       <div className="w-full max-w-lg mt-5">
         {schema ? (
-          <DynamicForm schema={schema} isPreview={isPreview} />
+          <DynamicForm
+            schema={schema}
+            isPreview={isPreview}
+            isEdit={isEdit}
+            submissionData={submissionData} 
+            formId={formId}
+            
+          />
         ) : (
           <p>Loading form...</p>
         )}

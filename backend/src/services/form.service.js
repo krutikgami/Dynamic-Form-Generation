@@ -221,7 +221,7 @@ export class FormService{
             }
             let submissionWhere = {};
             if (role === "USER" && userId) {
-                 submissionWhere = { userId };
+                submissionWhere = { userId };
             }
             const result = await formRepo.getFormSubmissionData(formId,submissionWhere)
             console.log(result)
@@ -248,6 +248,7 @@ export class FormService{
             });
 
         return {
+            id : result.id,
             title: result.title,
             description: result.description,
             tableHeadings,
@@ -259,33 +260,33 @@ export class FormService{
         }
     }
 
-    async updateUserDataService(formId,data,userId){
+    async updateUserDataService(formId,data,userId,role){
         try {
-
             const submissionExist = await formRepo.getFormSubmissionData(formId,{userId});
             if(!submissionExist){
                 throw new Error('Submission Doesn`t Exist You can not Update details')
             }
-            
-            const existingSubmission = submissionExist.submissions[0];
-            const existingKeys = Object.keys(existingSubmission.data[0] || {}); 
-            const newKeys = Object.keys(data[0] || {});
-
-            const missingKeys = existingKeys.filter(k => !newKeys.includes(k));
-            const extraKeys = newKeys.filter(k => !existingKeys.includes(k));
-
-            const keyMismatch = existingKeys.some((k, idx) => k !== newKeys[idx]);
-
-            if (missingKeys.length > 0 || extraKeys.length > 0 || keyMismatch) {
-                throw new Error("Invalid field data: submission schema mismatch");
+            console.log(data)
+            console.log(userId)
+            let userExists ;
+            if(role === 'ADMIN'){
+                userExists = await userRepo.findUSerExists({email : userId})
             }
+            // const existingSubmission = submissionExist.submissions[0];
+            // const existingKeys = Object.keys(existingSubmission.data[0] || {}); 
+            // const newKeys = Object.keys(data[0] || {});
 
-            const formData = {
-                formId,
-                userId,
-                data
-            }
-            return await formRepo.updateFormSubmission(formData);
+            // const missingKeys = existingKeys.filter(k => !newKeys.includes(k));
+            // const extraKeys = newKeys.filter(k => !existingKeys.includes(k));
+
+            // const keyMismatch = existingKeys.some((k, idx) => k !== newKeys[idx]);
+
+            // if (missingKeys.length > 0 || extraKeys.length > 0 || keyMismatch) {
+            //     throw new Error("Invalid field data: submission schema mismatch");
+            // }
+
+            const userIdToUpdate = userExists ? userExists.id : userId
+            return await formRepo.updateFormSubmission(formId, userIdToUpdate, data);
         } catch (error) {
             console.error('Error in FormService.updateUserDataService', error);
             throw error;
@@ -297,6 +298,19 @@ export class FormService{
             return await formRepo.getFormSchemaById(formId)
         } catch (error) {
             console.error('Error in FormService.getFormSchemaById', error);
+            throw error;
+        }
+    }
+
+    async deleteUserSubmissionService(formId,userId){
+        try {
+            let userIdToUpdate = await userRepo.findUSerExists({email : userId})
+            if(!userIdToUpdate){
+                throw new Error('User Does not exist')
+            }
+            return await formRepo.deleteUserSubmission(formId,userIdToUpdate.id);
+        } catch (error) {
+             console.error('Error in FormService.deleteUserSubmissionService', error);
             throw error;
         }
     }

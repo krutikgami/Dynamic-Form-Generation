@@ -104,8 +104,15 @@ export const getFormSubmissionData = async(req,res)=>{
 
 export const updateUserSubmissionData = async(req,res)=>{
     try {
-        const userId = req?.user?.id;
-        const updatedUser = await formService.updateUserDataService(req.body,userId);
+        let userId;
+        const {formId,data} = req.body;
+        const role = req?.user.role
+        if(role === 'ADMIN'){
+            userId = req.body.userId
+        }else{
+            userId = req?.user?.id;
+        }
+        const updatedUser = await formService.updateUserDataService(formId,data,userId,role);
         return sendResponse(res,STATUS_CODES.OK,true,"User Data Updated SuccessFully",updatedUser);
     } catch (error) {
         console.error('Controller Error in updateUserSubmissionData',error)
@@ -120,6 +127,17 @@ export const getFormSchema = async(req,res)=>{
         return sendResponse(res,STATUS_CODES.OK,true,"Form Schema Fetched Successfully",getSchema);
     } catch (error) {
         console.error('Controller Error in getFormSchema',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
+export const deleteUserSubmission = async(req,res)=>{
+    try {
+        const {formId,userId} = req.body;
+        await formService.deleteUserSubmissionService(formId,userId);
+        return sendResponse(res,STATUS_CODES.OK,true,"User Submission Deleted Successfully",null);
+    } catch (error) {
+         console.error('Controller Error in deleteUserSubmission',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }

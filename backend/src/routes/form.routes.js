@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import { createForm,publishForm,getFormsById,updateForm,formSubmissions,viewForm,getFormSubmissionData,updateUserSubmissionData ,getFormSchema} from '../controllers/form.controller.js'
+import { createForm,publishForm,getFormsById,updateForm,formSubmissions,viewForm,getFormSubmissionData,updateUserSubmissionData ,getFormSchema,deleteUserSubmission} from '../controllers/form.controller.js'
 import { adminAuthMiddleware } from '../middlewares/AdminAuthMiddleware.js';
 import {validate} from '../middlewares/validate.js'
 import {createFormSchema,createSubmissionSchema,publishFormSchema,updateFormSchema} from '../validations/form.validations.js';
@@ -13,6 +13,7 @@ router.patch('/updateForm',adminAuthMiddleware, validate(updateFormSchema), upda
 router.post('/form/submission', userLoginAuthMiddleware, validate(createSubmissionSchema), formSubmissions);
 router.post('/form/view', userLoginAuthMiddleware, viewForm)
 router.post('/form/submission/data',userLoginAuthMiddleware,getFormSubmissionData);
-router.patch('/form/submission',userLoginAuthMiddleware,validate(createSubmissionSchema),updateUserSubmissionData);
+router.patch('/form/submission',userLoginAuthMiddleware,updateUserSubmissionData);
 router.post('/form/schema',userLoginAuthMiddleware,getFormSchema)
+router.delete('/form/submission',adminAuthMiddleware,deleteUserSubmission);
 export default router;
