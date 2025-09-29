@@ -15,18 +15,11 @@ export const validate = (schema) => (req, res, next) => {
         STATUS_CODES.BADREQUEST,
         false,
         "Validation failed",
-        error.errors.map((err) => ({
-          path: Array.isArray(err.path) ? err.path.join(".") : err.path,
+        error.issues.map((err) => ({
+          path: err.path.join(".") ,
           message: err.message,
         }))
       );
     }
-    return sendError(
-      res,
-      STATUS_CODES.BADREQUEST,
-      false,
-      "Validation failed",
-      [{ path: "unknown", message: error.message || "Unknown error" }]
-    );
   }
 };

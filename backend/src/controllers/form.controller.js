@@ -1,7 +1,7 @@
 import { FormService } from '../services/form.service.js';
 import { STATUS_CODES } from '../utilities/constants/statusCodeConstants.js';
 import {sendError,sendResponse} from '../utilities/response.js'
-import {getForms} from '../resources/UserResources.js'
+import {getForms,adminFormManagerRes,adminFormAnalytics, adminFormRenderer} from '../resources/UserResources.js'
 import {createUserRole} from '../utilities/constants/codeConstants.js'
 const formService = new FormService();
 export const createForm = async(req,res) =>{
@@ -27,12 +27,26 @@ export const publishForm = async(req,res) => {
 export const getFormsById = async(req,res)=>{
     try {
         const {id,role} = req?.user;
-        const{q} = req.query;
+        const{q,resp} = req.query;
+        console.log(resp)
         const results =  await formService.getFormsByIdService(id,role,q);
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
-        const data = role === createUserRole ? results : results.map(form => getForms(form));
+        let data;
+        if(role === createUserRole){
+            if(resp === 'Manager'){
+                data = results.map(form => adminFormManagerRes(form))
+            }else if(resp === 'Analytics'){
+                data = results.map(form => adminFormAnalytics(form))
+            }else if (resp === 'Renderer') {
+                data = results.map(form => adminFormRenderer(form))
+            }else{
+                data = results
+            }
+        }else{
+            data = results.map(form => getForms(form));
+        }
         return sendResponse(res, STATUS_CODES.OK, true, "Forms fetched successfully", data);
     } catch (error) {
         console.error('Controller Error in getting Form',error)
@@ -78,10 +92,44 @@ export const viewForm = async(req,res)=>{
 export const getFormSubmissionData = async(req,res)=>{
     try {
         const {formId} = req.body;
-        const result = await formService.getFormSubmissionService(formId);
+        const userId = req.user.id
+        const role = req.user.role
+        const result = await formService.getFormSubmissionService(formId,userId,role);
         return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",result)
     } catch (error) {
         console.error('Controller Error in getFormSubmissionData',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
     }
 }
+
+export const updateUserSubmissionData = async(req,res)=>{
+    try {
+        const userId = req?.user?.id;
+        const updatedUser = await formService.updateUserDataService(req.body,userId);
+        return sendResponse(res,STATUS_CODES.OK,true,"User Data Updated SuccessFully",updatedUser);
+    } catch (error) {
+        console.error('Controller Error in updateUserSubmissionData',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
+export const getFormSchema = async(req,res)=>{
+    try {
+        const {formId} = req.body;
+        const getSchema = await formService.getFormSchemaByIdService(formId)
+        return sendResponse(res,STATUS_CODES.OK,true,"Form Schema Fetched Successfully",getSchema);
+    } catch (error) {
+        console.error('Controller Error in getFormSchema',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}
+
+// export const deleteAdminForm = async(req,res)=>{
+//     try {
+//         const {formId} = req.body;
+//         const deletedForm = await formService
+//     } catch (error) {
+//         console.error('Controller Error in deleteAdminForm',error)
+//         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+//     }
+// }

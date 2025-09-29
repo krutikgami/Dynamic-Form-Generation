@@ -1,24 +1,38 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import DynamicForm from "../components/Renderer/DynamicForm";
 import { useLocation } from "react-router-dom";
-export default function RenderPage(){
-    const location = useLocation();
+import { formSchemaService } from "../utilities/services/formSchemaService.js";
 
-    const stateSchema = location?.state?.schema
-    const isPreview = location?.state?.isPreview
-    const [schema,setSchema] = useState(null);
+export default function RenderPage() {
+  const location = useLocation();
+  const formId = location?.state?.formId;
+  const isPreview = location?.state?.isPreview;
+  const [schema, setSchema] = useState(null);
 
+  useEffect(() => {
+    const loadSchema = async () => {
+      try {
+        const response = await formSchemaService(formId);
+        console.log("Form schema response:", response);
+        setSchema(response); 
+      } catch (error) {
+        console.error("Error fetching form schema:", error);
+        setSchema(null);
+      }
+    };
 
-    useEffect(()=>{
-        setSchema(stateSchema)
-    },[stateSchema])
+    if (formId) loadSchema();
+  }, [formId]);
 
-    console.log("Render Page Data :",schema);
-    return(
-     <div className="flex justify-center items-center w-full">
-        <div className="w-full max-w-lg mt-5">
-            <DynamicForm schema={schema} isPreview={isPreview} />
-        </div>
+  return (
+    <div className="flex justify-center items-center w-full">
+      <div className="w-full max-w-lg mt-5">
+        {schema ? (
+          <DynamicForm schema={schema} isPreview={isPreview} />
+        ) : (
+          <p>Loading form...</p>
+        )}
       </div>
-    )
+    </div>
+  );
 }

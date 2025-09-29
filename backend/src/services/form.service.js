@@ -213,13 +213,17 @@ export class FormService{
         }
     }
 
-    async getFormSubmissionService(formId){
+    async getFormSubmissionService(formId,userId,role){
         try {
             const formExists = await formRepo.getFormExists(formId);
             if(!formExists){
                 throw new Error('Form Doesn`t exists')
             }
-            const result = await formRepo.getFormSubmissionData(formId)
+            let submissionWhere = {};
+            if (role === "USER" && userId) {
+                 submissionWhere = { userId };
+            }
+            const result = await formRepo.getFormSubmissionData(formId,submissionWhere)
             console.log(result)
             const tableHeadings = ['ID']
 
@@ -251,6 +255,48 @@ export class FormService{
         };
         } catch (error) {
             console.error('Error in FormService.getFormSubmissionService', error);
+            throw error;
+        }
+    }
+
+    async updateUserDataService(formId,data,userId){
+        try {
+
+            const submissionExist = await formRepo.getFormSubmissionData(formId,{userId});
+            if(!submissionExist){
+                throw new Error('Submission Doesn`t Exist You can not Update details')
+            }
+            
+            const existingSubmission = submissionExist.submissions[0];
+            const existingKeys = Object.keys(existingSubmission.data[0] || {}); 
+            const newKeys = Object.keys(data[0] || {});
+
+            const missingKeys = existingKeys.filter(k => !newKeys.includes(k));
+            const extraKeys = newKeys.filter(k => !existingKeys.includes(k));
+
+            const keyMismatch = existingKeys.some((k, idx) => k !== newKeys[idx]);
+
+            if (missingKeys.length > 0 || extraKeys.length > 0 || keyMismatch) {
+                throw new Error("Invalid field data: submission schema mismatch");
+            }
+
+            const formData = {
+                formId,
+                userId,
+                data
+            }
+            return await formRepo.updateFormSubmission(formData);
+        } catch (error) {
+            console.error('Error in FormService.updateUserDataService', error);
+            throw error;
+        }
+    }
+
+    async getFormSchemaByIdService(formId){
+        try {
+            return await formRepo.getFormSchemaById(formId)
+        } catch (error) {
+            console.error('Error in FormService.getFormSchemaById', error);
             throw error;
         }
     }

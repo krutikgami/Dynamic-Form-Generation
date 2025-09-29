@@ -8,7 +8,9 @@ import ProtectedAdmin from "./pages/PotectedAdmin.jsx"
 import { getCookie } from "./utilities/getCookie.js"
 import { decodeToken } from "./utilities/decodeToken.js"
 import FormManager from "./pages/FormManager.jsx"
-
+import FormAnalytics from "./pages/FormAnalytics.jsx"
+import UserFormManager from "./pages/UserFormManager.jsx"
+import ViewUserData from "./pages/ViewUserData.jsx"
 function AppLayout() {
   const token = getCookie() || null;
   const decoded = token ? decodeToken(token) : null;
@@ -36,8 +38,12 @@ function AppLayout() {
           <Route path="/login" element={<Login />} />
           <Route path="/builder" element={<ProtectedAdmin role={decoded?.role}><BuilderPage token={decoded} /> </ProtectedAdmin>} />
           <Route path="/manager" element={<ProtectedAdmin role={decoded?.role}><FormManager /> </ProtectedAdmin>} />
-          <Route path="/renderer" element={<RendererPage />} />
+          <Route path="/analytics" element={<ProtectedAdmin role={decoded?.role}><FormAnalytics /> </ProtectedAdmin>} />
+          <Route path="/renderer" element={<ProtectedAdmin role={decoded?.role} ><RendererPage /></ProtectedAdmin>} />
+          <Route path="/userrenderer" element={<RendererPage />} />
           <Route path="/view" element={<ViewAllForms role={decoded?.role}/>} />
+          <Route path="/usermanager" element={<UserFormManager />} />
+          <Route path="/viewData" element={<ViewUserData />} />
         </Routes>
       </div>
     </div>

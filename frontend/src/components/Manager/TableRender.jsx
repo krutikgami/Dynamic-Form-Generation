@@ -47,7 +47,7 @@ export default function TableRender(props) {
                       key={hIdx}
                       className="border px-4 py-2 text-sm text-gray-800"
                     >
-                      {row[heading === 'ID' ?  heading.toLowerCase() : heading] ?? "-"}
+                      {row[heading === 'ID' ?  heading.toLowerCase() : heading] ?? idx+1}
                     </td>
                   ))}
                 </tr>

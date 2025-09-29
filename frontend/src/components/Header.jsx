@@ -5,11 +5,12 @@ export default function Header({role}) {
     { id: "builder", label: "Builder", path: "/builder" },
     { id: "renderer", label: "Renderer", path: "/view" },
     { id: "manager", label: "Manager", path: "/manager" },
+    {id: "analytics", label: "Analytics",path: "/analytics"}
   ]
 
   const userTabs = [
     { id: "renderer", label: "Renderer", path: "/view" },
-    { id: "manager", label: "Manager", path: "/manager" },
+    { id: "manager", label: "Manager", path: "/usermanager" },
   ]
 
   const selectedTab = role === 'ADMIN' ? adminTabs : userTabs

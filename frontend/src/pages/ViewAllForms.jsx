@@ -15,7 +15,7 @@ export default function ViewAllForms({role}) {
 
     const fetchForms = async(value)=>{
       try {
-        const data = await formsService(value)
+        const data = await formsService(value,'Renderer')
         setForms(data || [])
       } catch (error) {
         console.error('Error Fetching Forms',error)
@@ -62,7 +62,7 @@ export default function ViewAllForms({role}) {
             className="bg-white shadow-md rounded-lg flex items-center justify-evenly h-32 cursor-pointer border hover:shadow-lg transition"
             onClick={() => {
               handleView(form.id)
-              navigate('/renderer',{state:{schema: form}})
+              navigate(role === 'ADMIN' ? '/renderer' : '/userrenderer',{state:{formId : form.id}})
             }}
           >
             <span className="text-lg font-semibold text-gray-800">
@@ -78,7 +78,7 @@ export default function ViewAllForms({role}) {
 
               <button className="bg-blue-500 border rounded-2xl text-white w-24 h-10 cursor-pointer" onClick={(e)=>{
                 e.stopPropagation();
-                navigate('/builder',{state: {formData : forms[index], isEdit : true}})
+                navigate('/builder',{state: {formId : form.id, isEdit : true}})
               }}>Edit Form</button>
             </div>
             }

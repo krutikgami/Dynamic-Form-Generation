@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { formsService } from "../utilities/services/formsService.js";
 import { Eye, FileText } from "lucide-react";
-import TableRender from "../components/Manager/TableRender.jsx";
 import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function FormManager() {
+  const navigate = useNavigate()
   const [forms, setForms] = useState([]);
-  const [submissionData, setSubmissionData] = useState(null);
   const [value, setValue] = useState("All");
   const [filterHide,setFilterHide] = useState(false)
 
   const fetchForms = async (val) => {
     try {
-      const data = await formsService(val);
+      const data = await formsService(val,'Manager');
       setForms(data || []);
     } catch (error) {
       console.error("Error Fetching Forms", error);
@@ -23,25 +23,10 @@ export default function FormManager() {
     fetchForms(value);
   }, [value]);
 
+  
   const handleClick = async (formId) => {
-    try {
-      setFilterHide(true)
-      const response = await fetch("/api/v1/admin/form/submission/data", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ formId }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.message);
-        return;
-      }
-      setSubmissionData(data?.data || []);
-    } catch (error) {
-      console.error("Error in Getting Form Submission Data", error);
-    }
+    setFilterHide(true)
+    navigate('/viewData',{state : {formId}})
   };
 
   return (
@@ -50,7 +35,6 @@ export default function FormManager() {
         <h1 className="text-2xl font-bold mb-6">All Forms</h1>
         {!filterHide &&<FilterByStatus onChange={setValue} />}
       </div>
-      {!submissionData ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {forms.map((form) => (
             <div
@@ -76,14 +60,6 @@ export default function FormManager() {
             </div>
           ))}
         </div>
-      ) : (
-        <TableRender
-          tableHeadings={submissionData.tableHeadings}
-          description={submissionData.description}
-          title={submissionData.title}
-          submissionData={submissionData.submissions}
-        />
-      )}
     </div>
   );
 }

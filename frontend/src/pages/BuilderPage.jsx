@@ -1,40 +1,61 @@
-import { useState,useEffect  } from "react"
-import FormBuilder from "../components/Builder/FormBuilder"
-import { useLocation } from "react-router-dom"
-export default function BuilderPage({token}) {
-    const location = useLocation();
-    const formData = location?.state?.formData;
-    const isEdit = location?.state?.isEdit;
-    const [form, setForm] = useState({
-        id : null,
-        title: '',
-        description: '',
-        schema :{fields: []}
-    })
+import { useState, useEffect } from "react";
+import FormBuilder from "../components/Builder/FormBuilder";
+import { useLocation } from "react-router-dom";
+import { formSchemaService } from "../utilities/services/formSchemaService.js";
 
-    useEffect(()=>{
-        if(formData){
-            setForm({
-                id : formData.id,
-                title : formData.title,
-                description : formData.description,
-                schema : {
-                    fields : formData.schema
-                }
-            })
+export default function BuilderPage({ token }) {
+  const location = useLocation();
+  const formId =  location?.state?.formId; 
+  const isEdit = location?.state?.isEdit;
+
+  const [form, setForm] = useState({
+    id: null,
+    title: "",
+    description: "",
+    schema: { fields: [] },
+  });
+
+  useEffect(() => {
+    const fetchFormDetails = async () => {
+      if (!formId) return;
+
+      try {
+        const response = await formSchemaService(formId);
+        console.log("BuilderPage schema response:", response);
+
+        if (response) {
+          setForm({
+            id: response.id,
+            title: response.title || "",
+            description: response.description || "",
+            schema: {
+              fields: response.schema || response.fields || [],
+            },
+          });
         }
-    },[formData,isEdit])
+      } catch (error) {
+        console.error("Error fetching form details:", error);
+      }
+    };
 
-    const handledFormSaved = (updatedForm) =>{
-        setForm(updatedForm)
-        console.log(form);
+    if (isEdit) {
+      fetchFormDetails();
     }
+  }, [formId, isEdit]);
 
-    return(
-        <>
-        <div className="w-full h-full">
-            <FormBuilder form={form} onFormSaved={handledFormSaved} isEdit={isEdit} token={token}/>
-        </div>
-        </>
-    )
+  const handledFormSaved = (updatedForm) => {
+    setForm(updatedForm);
+    console.log("Form updated:", updatedForm);
+  };
+
+  return (
+    <div className="w-full h-full">
+      <FormBuilder
+        form={form}
+        onFormSaved={handledFormSaved}
+        isEdit={isEdit}
+        token={token}
+      />
+    </div>
+  );
 }

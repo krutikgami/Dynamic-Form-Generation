@@ -276,7 +276,7 @@ export class FormRepository{
       }
     }
 
-    async getFormSubmissionData(formId){
+    async getFormSubmissionData(formId,submissionWhere={}){
       try {
         return await prisma.form.findUnique({
           where : {
@@ -284,6 +284,7 @@ export class FormRepository{
           },
           include : {
             submissions : {
+              where : submissionWhere,
               select : {
                 id : true,
                 formId : true,
@@ -301,6 +302,42 @@ export class FormRepository{
       } catch (error) {
         console.error('DB Error in FormRepository.getFormSubmissionData',error)
         throw new Error('Database error while getFormSubmissionData')
+      }
+    }
+
+    async updateFormSubmission(formData){
+      try {
+        return await prisma.submission.update({
+          where : {
+            formId : formData.formId,
+            userId : formData.userId
+          },
+          data :{
+            data : formData.data
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.updateFormSubmission',error)
+        throw new Error('Database error while updateFormSubmission')
+      }
+    }
+
+    async getFormSchemaById(formId){
+      try {
+        return await prisma.form.findUnique({
+          where :{
+            id : formId
+          },
+          select:{
+            id : true,
+            title : true,
+            description : true,
+            schema : true
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.getFormSchemaById',error)
+        throw new Error('Database error while getFormSchemaById')
       }
     }
 }

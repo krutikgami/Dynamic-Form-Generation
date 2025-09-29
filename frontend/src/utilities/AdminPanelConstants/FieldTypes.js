@@ -49,3 +49,17 @@ export const giveCss = () => {
     return properties;
 }
 
+export const tableHeads = [
+        "ID",
+        "Title",
+        "Description",
+        "Status",
+        "SubmissionLimit",
+        "StartDate",
+        "EndDate",
+        "CreatedAt",
+        "TotalViews",
+        "TotalSubmissions",
+      ]
+
+export const defaultDate = '01/01/1970'
