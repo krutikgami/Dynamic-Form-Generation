@@ -7,6 +7,7 @@ export default function RenderField({
   handleChange,
   handleCheckboxChange,
   isEdit,
+  isView,
   isLoading
 }) {
   switch (field.type) {
@@ -99,6 +100,7 @@ export default function RenderField({
             color: field.style?.color || "#ffffff",
           }}
           className="rounded-lg shadow-md"
+          disabled={isLoading || isView}
         >
           {isLoading ? <Loader /> : (isEdit ? "Update" : field.label)}
         </button>

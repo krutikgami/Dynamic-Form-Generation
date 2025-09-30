@@ -4,7 +4,7 @@ import { validateField } from "../../utilities/validations/validateField.js";
 import RenderField from "./RenderField.jsx";
 import { useToast } from "../ToastContainerUtility/ToastContainer.jsx";
 
-export default function DynamicForm({ schema,isPreview,isEdit,submissionData }) {
+export default function DynamicForm({ schema,isPreview,isEdit,submissionData,isView }) {
   const {showToast} = useToast();
   const [isLoading,setIsLoading] = useState(false)
   const [formData, setFormData] = useState({});
@@ -13,10 +13,10 @@ export default function DynamicForm({ schema,isPreview,isEdit,submissionData }) 
   console.log(submissionData)
    //call when user or admin try to update data of form
    useEffect(() => {
-    if (isEdit && submissionData) {
+    if (submissionData) {
       setFormData(submissionData || {});
     }
-  }, [isEdit, submissionData]);
+  }, [isEdit,isView,submissionData]);
 
   const validateForm = () => {
     let newErrors = {};
@@ -38,13 +38,13 @@ export default function DynamicForm({ schema,isPreview,isEdit,submissionData }) 
      if (Object.keys(newErrors).length === 0) { 
       console.log(formData)
       
-        const sanitizedFormData = Array.isArray(formData)
-        ? formData.map(({ deleted_at, ...rest }) => rest) 
-        : (({ deleted_at,id, ...rest }) => rest)(formData); 
+        // const sanitizedFormData = Array.isArray(formData)
+        // ? formData.map(({ deleted_at, ...rest }) => rest) 
+        // : (({ deleted_at,id, ...rest }) => rest)(formData); 
 
       const payload = isEdit
-        ? { formId: schema.id, data: sanitizedFormData, userId: submissionData?.id }
-        : { formId: schema.id, data: [sanitizedFormData] };
+        ? { formId: schema.id, data: formData, userId: submissionData?.id }
+        : { formId: schema.id, data: [formData] };
         
       setIsLoading(true)
         const response = await fetch('/api/v1/admin/form/submission',{
@@ -104,6 +104,7 @@ export default function DynamicForm({ schema,isPreview,isEdit,submissionData }) 
           handleChange={handleChange}
           handleCheckboxChange={handleCheckboxChange}
           isEdit={isEdit}
+          isView={isView}
           isLoading={isLoading}
         />
       ))}

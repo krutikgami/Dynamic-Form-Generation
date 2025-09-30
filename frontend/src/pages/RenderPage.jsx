@@ -10,6 +10,7 @@ export default function RenderPage() {
   const isPreview = location?.state?.isPreview;
   const isEdit = location?.state?.isEdit;
   const isView = location?.state?.isView;
+  const email = location?.state?.email;
 
   const [schema, setSchema] = useState(null);
   const [submissionData, setSubmissionData] = useState(null);
@@ -47,7 +48,7 @@ export default function RenderPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ formId, status }),
+          body: JSON.stringify({ formId, status, email }),
         });
 
         const data = await response.json();
@@ -73,7 +74,8 @@ export default function RenderPage() {
             schema={schema}
             isPreview={isPreview}
             isEdit={isEdit}
-            submissionData={submissionData} 
+            isView={isView}
+            submissionData={submissionData?.data?.[0] || null}
             formId={formId}   
           />
         ) : (

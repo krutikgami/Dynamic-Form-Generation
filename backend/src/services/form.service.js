@@ -3,6 +3,7 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { prisma } from '../utilities/prisma.constants.js';
 import {status,role, createUserRole, user} from '../utilities/constants/codeConstants.js'
 import { email } from 'zod';
+import { en } from 'zod/v4/locales';
 const formRepo = new FormRepository();
 const userRepo = new UserRepository();
 
@@ -214,7 +215,7 @@ export class FormService{
         }
     }
 
-    async getFormSubmissionService(formId,userId,role,status){
+    async getFormSubmissionService(formId,userId,role,status,email){
         try {
             const formExists = await formRepo.getFormExists(formId);
             if(!formExists){
@@ -228,7 +229,17 @@ export class FormService{
             console.log(result)
             let submissions;
             if(status === 'viewData'){
-                return result;
+                 const matchedSubmission = result.submissions.find(
+                    (sub) => sub.user?.email === email
+                );
+
+                if (matchedSubmission) {
+                    submissions = {
+                        data: matchedSubmission.data
+                    };
+                } else {
+                    submissions = null;
+                }
             }else{
                 submissions = result.submissions.map((submission)=>{
                     return {

@@ -27,11 +27,11 @@ export default function TableRender(props) {
   }, [props]);
 
   const handleEdit = (formId,idx) => {
-    navigate(role === "ADMIN" ? "/renderer" : "/userrenderer", { state: { formId , isEdit: true , submissionData : submissionData[idx]} });
+    navigate(role === "ADMIN" ? "/renderer" : "/userrenderer", { state: { formId , isEdit: true , email: submissionData[idx]?.email} });
   };
 
   const handleView = (formId,idx)=>{
-    navigate(role === "ADMIN" ? "/renderer" : "/userrenderer", { state: { formId , isView: true , submissionData : submissionData[idx]} });
+    navigate(role === "ADMIN" ? "/renderer" : "/userrenderer", { state: { formId , isView: true , email: submissionData[idx]?.email } });
   }
 
   const handleDelete = async (formId, idx) => {

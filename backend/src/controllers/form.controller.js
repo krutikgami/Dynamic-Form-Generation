@@ -90,10 +90,10 @@ export const viewForm = async(req,res)=>{
 
 export const getFormSubmissionData = async(req,res)=>{
     try {
-        const {formId,status} = req.body;
+        const {formId,status,email} = req.body;
         const userId = req.user.id
         const role = req.user.role
-        const result = await formService.getFormSubmissionService(formId,userId,role,status);
+        const result = await formService.getFormSubmissionService(formId,userId,role,status,email);
         return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",result)
     } catch (error) {
         console.error('Controller Error in getFormSubmissionData',error)
