@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PublishModal from "../components/Builder/PublishModal";
-import { handlePublish } from "../utilities/services/publishService.js";
+import { usePublish } from "../utilities/services/publishService.js";
 import { formsService } from "../utilities/services/formsService.js";
 import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
+import { formStatusFilter, getFormService,roleAdmin } from "../utilities/AdminPanelConstants/FieldTypes.js";
+
 
 export default function ViewAllForms({role}) {
+  const {publish} = usePublish();
   const [forms, setForms] = useState([]);
   const [idx,setIdx] = useState(null);
   const [showPublishModal,setShowPublishModal] = useState(false);
@@ -15,7 +18,7 @@ export default function ViewAllForms({role}) {
 
     const fetchForms = async(value)=>{
       try {
-        const data = await formsService(value,'Renderer')
+        const data = await formsService(value,getFormService.renderer)
         setForms(data || [])
       } catch (error) {
         console.error('Error Fetching Forms',error)
@@ -51,8 +54,8 @@ export default function ViewAllForms({role}) {
     <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold mb-6">All Forms</h1>
-          {role === 'ADMIN' &&
-            <FilterByStatus onChange={setValue} />
+          {role === roleAdmin &&
+            <FilterByStatus onChange={setValue} formStatusFilter={formStatusFilter}/>
           }
         </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -62,13 +65,13 @@ export default function ViewAllForms({role}) {
             className="bg-white shadow-md rounded-lg flex items-center justify-evenly h-32 cursor-pointer border hover:shadow-lg transition"
             onClick={() => {
               handleView(form.id)
-              navigate(role === 'ADMIN' ? '/renderer' : '/userrenderer',{state:{formId : form.id}})
+              navigate(role === roleAdmin ? '/renderer' : '/userrenderer',{state:{formId : form.id}})
             }}
           >
             <span className="text-lg font-semibold text-gray-800">
               {form?.title || "Untitled Form"}
             </span>
-            {role === 'ADMIN' && 
+            {role === roleAdmin && 
             <div>
               <button key={index} className="bg-green-400 border rounded-2xl text-white w-24 h-10 cursor-pointer" onClick={(e)=> {
                 e.stopPropagation();
@@ -89,7 +92,7 @@ export default function ViewAllForms({role}) {
         <PublishModal
           isOpen={showPublishModal}
           onClose={()=>setShowPublishModal(false)}
-          onPublish={handlePublish}
+          onPublish={publish}
           formData={forms[idx]}
         />
       )}

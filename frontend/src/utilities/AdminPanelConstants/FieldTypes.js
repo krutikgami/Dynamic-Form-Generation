@@ -61,5 +61,22 @@ export const tableHeads = [
         "TotalViews",
         "TotalSubmissions",
       ]
-
+export const roleAdmin  = 'ADMIN'
+export const roleUser = 'USER'
 export const defaultDate = '01/01/1970'
+
+export const dateLimit = 'No Limit'
+export const MaxSubmissions = 'Unlimited'
+export const getFormService = {
+   analytics: 'Analytics',
+   manager : "Manager",
+   renderer: "Renderer"
+}
+
+export const formStatusFilter = [
+  {Draft : "DRAFT"},
+  {Active : "ACTIVE"},
+  {Inactive : "INACTIVE"}
+]
+
+export const formAnalyticsTableHeadings = ['ID','Email',"Name","CreatedAt"]

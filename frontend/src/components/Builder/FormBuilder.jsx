@@ -4,10 +4,15 @@ import BuilderCanvas from "./BuilderCanvas";
 import FieldSettings from "./FieldSettings";
 import {useNavigate} from 'react-router-dom'
 import PublishModal from "./PublishModal";
-import { handlePublish } from "../../utilities/services/publishService.js";
+import { usePublish } from "../../utilities/services/publishService.js";
+import Loader from '../Loader.jsx'
+import { useToast } from "../ToastContainerUtility/ToastContainer.jsx";
 
 export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
     const navigate = useNavigate();
+    const {showToast} = useToast();
+    const {publish} = usePublish()
+    const [isLoading,setIsLoading] = useState(false);
     const [schema,setSchema] =useState({
         title : 'New Form',
         description: '',
@@ -32,7 +37,7 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
 
     const handleDraft = async() =>{
         try {
-            
+            setIsLoading(true)
             const formData = {
                 id: form ? form.id : null,
                 title : schema.title,
@@ -52,14 +57,20 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
             console.log(data)
             if(!res.ok){
                 setIsSaved(false);
-                alert(data.message)
+                if(data?.errors){
+                    data?.errors.map((err)=> showToast(err.message,data.success))
+                }else{
+                    showToast(data.message,data.success)
+                }
+                return
             }
             setIsSaved(true);
             setFormData(data.data)
-            alert(data.message)
-            
+            showToast(data.message,data.success)
         }catch (error) {
             console.error("save Draft error", error);
+        }finally{
+            setIsLoading(false)
         }
     }
     
@@ -78,7 +89,9 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
                     <button 
                     className="bg-blue-600 text-white w-22 h-10 rounded-2xl mb-0 cursor-pointer" 
                     onClick={()=>{
-                    navigate('/renderer',{state : {schema : schema , isPreview : true}})
+                        const isOk = window.confirm('This is One Time Preview if you come back then form is lost.')
+                        if(!isOk) return;
+                        navigate('/renderer',{state : {schema : schema , isPreview : true}})
                     }}>Preview</button>
 
                     <button
@@ -90,7 +103,7 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
                     }`}
                     onClick={handleDraft}
                     >
-                    {isEdit ? "Edit Form" :"Save Draft"}
+                    {isLoading ? <Loader /> : (isEdit ? "Edit Form" :"Save Draft")}
                     </button>
                     <button
                     disabled={!isSaved}
@@ -111,8 +124,13 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
             <PublishModal
                 isOpen={showPublishModal}
                 onClose={() => setShowPublishModal(false)}
-                onPublish={handlePublish}
+                onPublish={async(publishData)=>{
+                    setIsLoading(true)
+                    await publish(publishData,()=>setShowPublishModal(true),showToast)
+                    setIsLoading(false)
+                }}
                 formData={formdata}
+                isLoading={isLoading}
             />
         </div>
      </>   

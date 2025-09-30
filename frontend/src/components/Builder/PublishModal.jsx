@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-
-export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
+import { useState, useEffect,useCallback } from "react";
+import Loader from "../Loader";
+export default function PublishModal({ isOpen, onClose, onPublish, formData,isLoading }) {
   const [status, setStatus] = useState("ACTIVE");
   const [maxSubmissions, setMaxSubmissions] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -27,7 +27,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
     }
   }, [formData, isOpen]);
 
-  const fetchUsers = async (query) => {
+  const fetchUsers = useCallback(async (query) => {
     if (!query.trim()) {
       setSuggestions([]);
       return;
@@ -41,7 +41,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
     } catch (err) {
       console.error("Error fetching users", err);
     }
-  };
+  },[]);
 
   useEffect(() => {
     const words = textareaValue.split(",");
@@ -111,6 +111,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
+              <option value="All">---Select Status---</option>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </select>
@@ -183,7 +184,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
               type="submit"
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
             >
-              Save
+              {isLoading ? <Loader /> : "Save"}
             </button>
           </div>
         </form>

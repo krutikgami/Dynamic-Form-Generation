@@ -78,6 +78,8 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
   }
 
   const deleteField = (index) => {
+    const isOk = window.confirm('Are you sure? You want to delete field')
+    if(!isOk) return 
     const newFields = schema.fields.filter((_, i) => i !== index)
     onSchemaChange({
       ...schema,
@@ -203,8 +205,8 @@ const renderField = (field, idx) => {
                 placeholder="Enter your form title"
                 onChange={(e) =>
                     onSchemaChange({
-                    ...schema,
-                    title: e.target.value,
+                      ...schema,
+                      title: e.target.value,
                     })
                 }
                 />

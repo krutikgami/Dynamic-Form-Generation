@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../components/ToastContainerUtility/ToastContainer";
+import Loader from "../components/Loader";
 
 export default function Login() {
+  const {showToast} = useToast();
     const navigate = useNavigate();
+    const [isLoading,setIsLoading] = useState(false)
     const [formdata,setFormData] = useState({
         email : '',
         password : ''
     })
     const handleLogin = async()=>{
         try {
+          setIsLoading(true)
             const response = await fetch('/api/v1/admin/login',{
                 headers :{
                     'Content-Type' : 'application/json'
@@ -19,13 +24,16 @@ export default function Login() {
             const data = await response.json();
             console.log(data)
             if(!response.ok){
-                console.log(data?.message);
-                alert('Login Failed',data?.message)
+              console.log(data?.message);
+              showToast(data.message,data.success)
+              return
             }
-            alert(data?.message);
+            showToast(data.message,data.success)
             navigate('/builder')
         } catch (error) {
             console.error('Error in Login',error)
+        }finally{
+          setIsLoading(false)
         }
     }
   return (
@@ -61,8 +69,8 @@ export default function Login() {
           />
         </div>
 
-        <button className="bg-green-500 hover:bg-green-600 text-white font-semibold w-full py-3 rounded-lg transition duration-200" onClick={handleLogin}>
-          Login
+        <button className="bg-green-500 hover:bg-green-600 text-white font-semibold w-full py-3 rounded-lg transition duration-200 cursor-pointer" onClick={handleLogin}>
+          {isLoading ? <Loader /> : "Login"}
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function FilterByStatus({ onChange }) {
+export default function FilterByStatus({ onChange,formStatusFilter }) {
   const [statusValue, setStatusValue] = useState("All");
 
   const handleChange = (e) => {
@@ -24,9 +24,14 @@ export default function FilterByStatus({ onChange }) {
         className="border rounded px-2 py-1"
       >
         <option value="All">---Select Status---</option>
-        <option value="DRAFT">Draft</option>
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
+        {formStatusFilter.map((obj, idx) => {
+          const [label, value] = Object.entries(obj)[0];
+          return (
+            <option key={idx} value={value}>
+              {label}
+            </option>
+          );
+        })}
       </select>
     </div>
   );

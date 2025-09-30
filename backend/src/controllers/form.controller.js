@@ -2,7 +2,7 @@ import { FormService } from '../services/form.service.js';
 import { STATUS_CODES } from '../utilities/constants/statusCodeConstants.js';
 import {sendError,sendResponse} from '../utilities/response.js'
 import {getForms,adminFormManagerRes,adminFormAnalytics, adminFormRenderer} from '../resources/UserResources.js'
-import {createUserRole} from '../utilities/constants/codeConstants.js'
+import {createUserRole, getFormsService} from '../utilities/constants/codeConstants.js'
 const formService = new FormService();
 export const createForm = async(req,res) =>{
     try {
@@ -28,18 +28,17 @@ export const getFormsById = async(req,res)=>{
     try {
         const {id,role} = req?.user;
         const{q,resp} = req.query;
-        console.log(resp)
         const results =  await formService.getFormsByIdService(id,role,q);
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
         let data;
         if(role === createUserRole){
-            if(resp === 'Manager'){
+            if(resp === getFormsService.manager){
                 data = results.map(form => adminFormManagerRes(form))
-            }else if(resp === 'Analytics'){
+            }else if(resp === getFormsService.analytics){
                 data = results.map(form => adminFormAnalytics(form))
-            }else if (resp === 'Renderer') {
+            }else if (resp === getFormsService.renderer) {
                 data = results.map(form => adminFormRenderer(form))
             }else{
                 data = results
@@ -91,10 +90,10 @@ export const viewForm = async(req,res)=>{
 
 export const getFormSubmissionData = async(req,res)=>{
     try {
-        const {formId} = req.body;
+        const {formId,status} = req.body;
         const userId = req.user.id
         const role = req.user.role
-        const result = await formService.getFormSubmissionService(formId,userId,role);
+        const result = await formService.getFormSubmissionService(formId,userId,role,status);
         return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",result)
     } catch (error) {
         console.error('Controller Error in getFormSubmissionData',error)
@@ -107,7 +106,7 @@ export const updateUserSubmissionData = async(req,res)=>{
         let userId;
         const {formId,data} = req.body;
         const role = req?.user.role
-        if(role === 'ADMIN'){
+        if(role === createUserRole){
             userId = req.body.userId
         }else{
             userId = req?.user?.id;

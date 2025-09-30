@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import TableRender from "../components/Manager/TableRender";
+import { formAnalyticsTableHeadings } from "../utilities/AdminPanelConstants/FieldTypes.js";
 export default function ViewUserData({ role }) {
   const location = useLocation();
   const { formId } = location.state || {};
   const [formData, setFormData] = useState(null);
+
 
   useEffect(() => {
     if (!formId) return;
@@ -40,13 +42,14 @@ export default function ViewUserData({ role }) {
   return (
     <div className="p-6">
      <TableRender 
-        tableHeadings={formData.tableHeadings}
+        tableHeadings={formAnalyticsTableHeadings}
         title={formData.title}
         description={formData.description}
         submissionData={formData.submissions}
         id={formData.id}
         role={role}
         viewOperation={true}
+        manager={'Manager'}
      />
     </div>
   );

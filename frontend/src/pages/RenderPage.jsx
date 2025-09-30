@@ -5,13 +5,23 @@ import { formSchemaService } from "../utilities/services/formSchemaService.js";
 
 export default function RenderPage() {
   const location = useLocation();
+  const schemas = location?.state?.schema;
   const formId = location?.state?.formId;
   const isPreview = location?.state?.isPreview;
-  const submissionData = location?.state?.submissionData;
   const isEdit = location?.state?.isEdit;
+  const isView = location?.state?.isView;
+
   const [schema, setSchema] = useState(null);
+  const [submissionData, setSubmissionData] = useState(null);
 
   useEffect(() => {
+    if (isPreview) {
+      setSchema(schemas);
+      return;
+    }
+
+    if (!formId) return;
+
     const loadSchema = async () => {
       try {
         const response = await formSchemaService(formId);
@@ -23,8 +33,37 @@ export default function RenderPage() {
       }
     };
 
-    if (formId) loadSchema();
-  }, [formId]);
+    loadSchema();
+  }, [formId, isPreview, schemas]);
+
+  useEffect(() => {
+    if (!formId) return;
+
+    const fetchSubmissionData = async () => {
+      try {
+        const status = "viewData"; 
+        const response = await fetch("/api/v1/admin/form/submission/data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ formId, status }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to fetch submission data");
+        } else {
+          setSubmissionData(data?.data?.submissions || []);
+        }
+      } catch (error) {
+        console.error("Error while fetching submission data:", error);
+      }
+    };
+
+    fetchSubmissionData();
+  }, [formId, isEdit, isView]);
 
   return (
     <div className="flex justify-center items-center w-full">
@@ -35,8 +74,7 @@ export default function RenderPage() {
             isPreview={isPreview}
             isEdit={isEdit}
             submissionData={submissionData} 
-            formId={formId}
-            
+            formId={formId}   
           />
         ) : (
           <p>Loading form...</p>

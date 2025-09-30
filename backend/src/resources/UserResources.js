@@ -27,6 +27,7 @@ export const adminFormAnalytics = (formData)=>{
         description : formData.description,
         analytics : formData.analytics,
         startDate : formData.startDate,
+        maxSubmissions : formData.maxSubmissions,
         endDate : formData.endDate,
         status : formData.status,
         created_at : formData.created_at

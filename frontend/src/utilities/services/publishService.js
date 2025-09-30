@@ -1,4 +1,9 @@
-export const handlePublish = async (publishData,onClose) => {
+import { useToast } from "../../components/ToastContainerUtility/ToastContainer.jsx";
+
+export function usePublish() {
+  const { showToast } = useToast();
+
+  const publish = async (publishData, onClose) => {
     try {
       const res = await fetch("/api/v1/admin/form", {
         headers: {
@@ -10,14 +15,23 @@ export const handlePublish = async (publishData,onClose) => {
 
       const data = await res.json();
       console.log(data);
+
       if (!res.ok) {
-        alert(data.message);
+        if (data?.errors) {
+          data.errors.forEach((err) => showToast(err.message, data.success));
+        } else {
+          showToast(data.message, data.success);
+        }
         return;
       }
-      alert("Form published successfully!");
-      onClose()
+
+      showToast(data.message, data.success);
+      if (onClose) onClose();
       return data;
     } catch (error) {
       console.error("Publish error", error);
     }
+  };
+
+  return { publish };
 }

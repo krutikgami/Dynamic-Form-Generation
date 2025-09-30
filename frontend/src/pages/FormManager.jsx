@@ -3,6 +3,8 @@ import { formsService } from "../utilities/services/formsService.js";
 import { Eye, FileText } from "lucide-react";
 import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
 import { useNavigate } from "react-router-dom";
+import { formStatusFilter, getFormService } from "../utilities/AdminPanelConstants/FieldTypes.js";
+
 
 export default function FormManager() {
   const navigate = useNavigate()
@@ -12,7 +14,7 @@ export default function FormManager() {
 
   const fetchForms = async (val) => {
     try {
-      const data = await formsService(val,'Manager');
+      const data = await formsService(val,getFormService.manager);
       setForms(data || []);
     } catch (error) {
       console.error("Error Fetching Forms", error);
@@ -33,7 +35,7 @@ export default function FormManager() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold mb-6">All Forms</h1>
-        {!filterHide &&<FilterByStatus onChange={setValue} />}
+        {!filterHide &&<FilterByStatus onChange={setValue} formStatusFilter={formStatusFilter}/>}
       </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {forms.map((form) => (

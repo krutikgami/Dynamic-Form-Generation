@@ -11,6 +11,9 @@ import FormManager from "./pages/FormManager.jsx"
 import FormAnalytics from "./pages/FormAnalytics.jsx"
 import UserFormManager from "./pages/UserFormManager.jsx"
 import ViewUserData from "./pages/ViewUserData.jsx"
+import { roleAdmin,roleUser } from "./utilities/AdminPanelConstants/FieldTypes.js"
+
+
 function AppLayout() {
   const token = getCookie() || null;
   const decoded = token ? decodeToken(token) : null;
@@ -20,10 +23,10 @@ function AppLayout() {
     return <Navigate to="/login" replace />
   }
 
-  if (token && decoded?.role === "ADMIN" && location.pathname === "/login") {
+  if (token && decoded?.role === roleAdmin && location.pathname === "/login") {
     return <Navigate to="/builder" replace />
   }
-  if (token && decoded?.role === "USER" && location.pathname === "/login") {
+  if (token && decoded?.role === roleUser && location.pathname === "/login") {
     return <Navigate to="/view" replace />
   }
 

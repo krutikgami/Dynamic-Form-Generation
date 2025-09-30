@@ -1,7 +1,8 @@
 import {FormRepository} from '../repositories/form.repository.js'
 import { UserRepository } from '../repositories/user.repository.js';
 import { prisma } from '../utilities/prisma.constants.js';
-import {status,role} from '../utilities/constants/codeConstants.js'
+import {status,role, createUserRole, user} from '../utilities/constants/codeConstants.js'
+import { email } from 'zod';
 const formRepo = new FormRepository();
 const userRepo = new UserRepository();
 
@@ -213,45 +214,36 @@ export class FormService{
         }
     }
 
-    async getFormSubmissionService(formId,userId,role){
+    async getFormSubmissionService(formId,userId,role,status){
         try {
             const formExists = await formRepo.getFormExists(formId);
             if(!formExists){
                 throw new Error('Form Doesn`t exists')
             }
             let submissionWhere = {};
-            if (role === "USER" && userId) {
+            if (role === user && userId) {
                 submissionWhere = { userId };
             }
             const result = await formRepo.getFormSubmissionData(formId,submissionWhere)
             console.log(result)
-            const tableHeadings = ['ID']
-
-            result.schema.map((col,idx)=>{
-                if (!col?.name.startsWith('button')) {
-                    tableHeadings.push(col.label)
-                }
-            })
-            const submissions = result.submissions.map((submission) => {
-                const row = {
-                    id: submission.user.email
-                };
-                result.schema.forEach((col) => {
-                    if (!col?.name.startsWith('button')) {
-                        const label = col.label;
-                        const fieldData = submission.data[0]?.[label] || null;
-                        row[label] = fieldData;
+            let submissions;
+            if(status === 'viewData'){
+                return result;
+            }else{
+                submissions = result.submissions.map((submission)=>{
+                    return {
+                        email : submission.user.email,
+                        name : submission.user.name,
+                        deleted_at : submission.deleted_at,
+                        created_at : submission.created_at
                     }
-                });
-
-             return row;
-            });
+                })
+            }
 
         return {
             id : result.id,
             title: result.title,
             description: result.description,
-            tableHeadings,
             submissions
         };
         } catch (error) {
@@ -269,7 +261,7 @@ export class FormService{
             console.log(data)
             console.log(userId)
             let userExists ;
-            if(role === 'ADMIN'){
+            if(role === createUserRole){
                 userExists = await userRepo.findUSerExists({email : userId})
             }
             // const existingSubmission = submissionExist.submissions[0];

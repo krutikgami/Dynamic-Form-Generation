@@ -1,6 +1,10 @@
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import Cookie from "js-cookie"
+import {roleAdmin} from '../utilities/AdminPanelConstants/FieldTypes.js'
+import { useToast } from "./ToastContainerUtility/ToastContainer.jsx"
 export default function Header({role}) {
+  const {showToast} = useToast();
+  const navigate = useNavigate();
   const adminTabs = [
     { id: "builder", label: "Builder", path: "/builder" },
     { id: "renderer", label: "Renderer", path: "/view" },
@@ -13,7 +17,7 @@ export default function Header({role}) {
     { id: "manager", label: "Manager", path: "/usermanager" },
   ]
 
-  const selectedTab = role === 'ADMIN' ? adminTabs : userTabs
+  const selectedTab = role === roleAdmin ? adminTabs : userTabs
   
   return (
     <header className="flex items-center justify-between bg-gray-800 px-6 py-4 shadow-md">
@@ -39,7 +43,8 @@ export default function Header({role}) {
           onClick={() => {
             Cookie.remove('authTokenClient');
             Cookie.remove('authToken');
-            window.location.href = '/login';
+            showToast("User Logout Successfully",true)
+            navigate('/login')
           }}
           className="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition"
         >

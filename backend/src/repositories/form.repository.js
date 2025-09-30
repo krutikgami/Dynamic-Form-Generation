@@ -1,3 +1,4 @@
+import { createUserRole, STATUSNOTIN } from '../utilities/constants/codeConstants.js'
 import {prisma} from '../utilities/prisma.constants.js'
 
 export class FormRepository{
@@ -77,7 +78,7 @@ export class FormRepository{
     
     async getFormsById(id,role,q){
       try {
-        if(role==='ADMIN'){
+        if(role === createUserRole){
           let where = q !== 'All' ? { userId : id,status: q} : { userId : id}
           return await prisma.form.findMany({
             where,
@@ -118,7 +119,7 @@ export class FormRepository{
             prisma.form.findMany({
               where: { id : ids,
                 status : {
-                notIn : ['DRAFT','INACTIVE']
+                notIn : STATUSNOTIN
               } 
             },
               include: { 
@@ -291,8 +292,11 @@ export class FormRepository{
                 formId : true,
                 userId : true,
                 data : true,
+                deleted_at : true,
+                created_at : true,
                 user : {
                   select : {
+                    name: true,
                     email : true
                   }
                 }
