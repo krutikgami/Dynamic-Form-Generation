@@ -14,9 +14,13 @@ export const publishFormSchema = z.object({
   maxSubmissions: z.number().int("Must be an integer").nullable().optional(),
   startDate: z
     .string()
+    .nullable()
+    .optional()
     .refine((val) => !isNaN(new Date(val).getTime()), { message: "Invalid startDate format" }),
   endDate: z
     .string()
+    .nullable()
+    .optional()
     .refine((val) => !isNaN(new Date(val).getTime()), { message: "Invalid endDate format" }),
 });
 

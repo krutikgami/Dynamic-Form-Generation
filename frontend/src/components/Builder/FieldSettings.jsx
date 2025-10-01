@@ -1,8 +1,11 @@
 import { useState,useEffect } from "react"
 import { getSupportedValidations } from "../../utilities/Admin/getSupportValidations.js"
 import  {giveCss} from '../../utilities/AdminPanelConstants/FieldTypes.js'
-export default function FieldSettings({schema,onschemaChange,selectedFieldId}) {
+import Button from '../common/Button.jsx'
+import Modal from '../common/Modal.jsx'
 
+export default function FieldSettings({schema,onschemaChange,selectedFieldId}) {
+  const [modalOpenId, setModalOpenId] = useState(null)
   const [style ,setStyle] = useState(null)
   useEffect(()=>{
     const cssProp = giveCss();
@@ -100,27 +103,36 @@ return (
                       placeholder={`Option ${index + 1}`}
                       className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       />
-                      <button
-                      type="button"
-                      onClick={() => removeOption(index)}
-                      className="bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded hover:bg-red-600 text-xs cursor-pointer"
-                      >
-                      x
-                      </button>
+                       <Button
+                        title="x"
+                        onClickFunction={() => setModalOpenId(index)}
+                        className="bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded hover:bg-red-600 text-xs cursor-pointer"
+                      />
+                      <Modal
+                        isOpen={modalOpenId === index}
+                        onClose={() => setModalOpenId(null)}
+                        message="Are you sure you want to remove this option?"
+                        actionButtons={[
+                          {
+                            label: "Yes",
+                            onClick: () => {
+                              removeOption(index)
+                              setModalOpenId(null)
+                            }
+                          }
+                        ]}
+                      />
                   </div>
                   ))}
-                  <button
-                  type="button"
-                  className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                  onClick={addOption}
-                  >
-                  +
-                  </button>
+                  <Button
+                    title="+"
+                    className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                    onClickFunction={addOption}
+                  />
               </div>
               </div>
           )}
-
-
+          
       { /* fieldType Validaions Div*/}
       {selectedField.type !== 'button' &&(
           <div className="space-y-3">
@@ -186,9 +198,7 @@ return (
             cols={40}
             className={`${Object.values(style || {}).length>0?"text-yellow-500":"text-white"} w-full border bg-black border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono`}
             value={style ? JSON.stringify(style).split(",").join("\n") : ""}
-            onChange={(e) => {
-                setStyle(JSON.parse(e.target.value));
-            }}
+            onChange={(e) => setStyle(JSON.parse(e.target.value))}
           />
           </div>
               {/* <label className="block font-medium text-gray-700">Style</label>

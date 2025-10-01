@@ -5,7 +5,6 @@ import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
 import { useNavigate } from "react-router-dom";
 import { formStatusFilter, getFormService } from "../utilities/AdminPanelConstants/FieldTypes.js";
 
-
 export default function FormManager() {
   const navigate = useNavigate()
   const [forms, setForms] = useState([]);

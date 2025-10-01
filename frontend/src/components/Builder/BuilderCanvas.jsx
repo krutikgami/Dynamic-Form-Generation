@@ -1,7 +1,11 @@
-import { useCallback } from "react"
+import { useState,useCallback } from "react"
 import { getDefaultLabel } from "../../utilities/AdminPanelConstants/FieldTypes.js"
+import Button from '../common/Button.jsx'
+import Modal from '../common/Modal.jsx'
 
 export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, onFieldChange}) {
+   const [modalOpenId, setModalOpenId] = useState(null)
+
     const handleDragOver = (e) => {
         e.preventDefault()
         e.dataTransfer.dropEffect = 'copy'
@@ -10,8 +14,9 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
     const handleDrop = useCallback((e) => {
         e.preventDefault()
         const fieldType = e.dataTransfer.getData("fieldType")
-        const fromIndex = e.dataTransfer.getData("fromIndex")
-
+        const fromIndex = e.dataTransfer.getData("formIndex")
+        console.log(fieldType)
+        console.log(fromIndex)
         if (fieldType) {
             addNewField(fieldType)
         } else if (fromIndex !== "") {
@@ -28,7 +33,7 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
             const midpoint = rect.top + rect.height / 2
 
             if (clientY < midpoint) {
-            return i
+             return i
             }
         }
         return fields.length
@@ -58,18 +63,22 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
         onFieldChange(newField.id)
     }
 
+    const handleRemoveField = (idx) =>{
+      deleteField(idx)
+    }
+
     const reorderField = (fromIndex, toIndex) => {
-    if (fromIndex === toIndex) return
+      if (fromIndex === toIndex) return
 
-    const newFields = [...schema.fields]
-    const [movedField] = newFields.splice(fromIndex, 1)
-    newFields.splice(toIndex, 0, movedField)
+      const newFields = [...schema.fields]
+      const [movedField] = newFields.splice(fromIndex, 1)
+      newFields.splice(toIndex, 0, movedField)
 
-    onSchemaChange({
-      ...schema,
-      fields: newFields
-    })
-  }
+      onSchemaChange({
+        ...schema,
+        fields: newFields
+      })
+    }
 
   const handleFieldDragStart = (e, index) => {
     e.dataTransfer.setData('fromIndex', index.toString())
@@ -78,8 +87,6 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
   }
 
   const deleteField = (index) => {
-    const isOk = window.confirm('Are you sure? You want to delete field')
-    if(!isOk) return 
     const newFields = schema.fields.filter((_, i) => i !== index)
     onSchemaChange({
       ...schema,
@@ -148,7 +155,7 @@ const renderFieldPreview = (field) => {
      ) : (
         <>
       {field.type === 'button' &&(
-        <button style={field.style} type={field.defaultBehaviour}>{field.label}</button>
+        <Button style={field.style} type={field.defaultBehaviour}  title={field.label}/>
       )}
       </>
     )}
@@ -169,29 +176,39 @@ const renderField = (field, idx) => {
       onDragStart={(e) => handleFieldDragStart(e, idx)}
     >
       <div className="absolute top-2 right-2 flex gap-2">
-        <button
+        <Button
           className="bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded hover:bg-red-600 text-xs cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation()
-            deleteField(idx)
-          }}
-          title="Delete field"
-        >
-          ×
-        </button>
+          onClickFunction={(e) =>setModalOpenId(field.id)}
+          title="x"
+        />
 
-        <div
+        <Modal
+          isOpen={modalOpenId === field.id}
+          onClose={() => setModalOpenId(null)}
+          message="Are you sure you want to remove field?"
+          actionButtons={[
+            {
+              label: "Yes",
+              onClick: () => {
+                handleRemoveField(idx)
+                setModalOpenId(null)
+              }
+            }
+          ]}
+        />
+
+        {/* <div
           className="bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded cursor-grab text-sm"
           title="Drag to reorder"
+          onDragStart={(e)=>handleFieldDragStart(e,idx)}
         >
           ::
-        </div>
+        </div> */}
       </div>
       {renderFieldPreview(field)}
     </div>
   )
 }
-
 
     return(
         <>

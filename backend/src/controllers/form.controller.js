@@ -27,8 +27,8 @@ export const publishForm = async(req,res) => {
 export const getFormsById = async(req,res)=>{
     try {
         const {id,role} = req?.user;
-        const{q,resp} = req.query;
-        const results =  await formService.getFormsByIdService(id,role,q);
+        const{q,resp,userId} = req.query;
+        const results =  await formService.getFormsByIdService(id,role,q,userId);
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');

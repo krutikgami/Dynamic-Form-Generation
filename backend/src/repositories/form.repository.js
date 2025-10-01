@@ -139,7 +139,7 @@ export class FormRepository{
         throw new Error('Database error while getting Forms')
       }
     }
-
+    
     async getFormAnalyticsById({formId},client=tx){
       try {
         return await client.formAnalytics.findFirst({

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ToastContainerUtility/ToastContainer";
-import Loader from "../components/Loader";
+import Button from "../components/common/Button";
 
 export default function Login() {
   const {showToast} = useToast();
@@ -69,9 +69,11 @@ export default function Login() {
           />
         </div>
 
-        <button className="bg-green-500 hover:bg-green-600 text-white font-semibold w-full py-3 rounded-lg transition duration-200 cursor-pointer" onClick={handleLogin}>
-          {isLoading ? <Loader /> : "Login"}
-        </button>
+        <Button 
+        title="Login"
+         className="bg-green-500 hover:bg-green-600 text-white font-semibold w-full py-3 rounded-lg transition duration-200 cursor-pointer" 
+         onClickFunction={handleLogin}
+        />
       </div>
     </div>
   );

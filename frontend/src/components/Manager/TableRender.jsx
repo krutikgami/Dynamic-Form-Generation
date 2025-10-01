@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Loader from "../Loader";
 import { useToast } from "../ToastContainerUtility/ToastContainer";
+import Button from "../common/Button";
+import Modal from "../common/Modal";
 
 export default function TableRender(props) {
   const {showToast} = useToast()
-  const [isLoading,setIsLoading] = useState(false)
+  const [isOpen,setIsOpen] = useState(false)
   const [tableHeadings, setTableHeadings] = useState([]);
   const [submissionData, setSubmissionData] = useState([]);
   const [title, setTitle] = useState("");
@@ -36,15 +37,15 @@ export default function TableRender(props) {
 
   const handleDelete = async (formId, idx) => {
   try {
-    const confirmDelete = window.confirm("Are you sure you want to delete this submission?");
-    if (!confirmDelete) return; 
-    setIsLoading(true)
+    console.log(formId)
+    console.log(idx)
+    console.log(submissionData[idx]?.email)
     const response = await fetch("/api/v1/admin/form/submission", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ formId, userId: submissionData[idx]?.id }),
+      body: JSON.stringify({ formId, userId: submissionData[idx]?.email }),
     });
 
     const data = await response.json();
@@ -55,8 +56,6 @@ export default function TableRender(props) {
      showToast(data.message,data.success);
   } catch (error) {
     console.error("Error deleting user Submission", error);
-  }finally{
-    setIsLoading(false)
   }
 };
 
@@ -132,35 +131,46 @@ export default function TableRender(props) {
                   )}
                   {props.viewOperation && (
                   <td className="flex justify-center px-4 py-2 text-sm text-gray-800 space-x-2">
-                    <button
-                      onClick={() => handleEdit(id, idx)}
+                    <Button
+                      title="Edit"
+                      onClickFunction={() => handleEdit(id, idx)}
                       className={`px-2 py-1 rounded 
                         ${submissionData[idx]?.deleted_at !== null 
                           ? "bg-gray-400 text-white cursor-not-allowed" 
                           : "bg-blue-500 text-white hover:bg-blue-600"}`}
                       disabled={submissionData[idx]?.deleted_at !== null}
-                    >
-                      Edit
-                    </button>
+                    />
 
-                    <button
-                      onClick={() => handleView(id, idx)}
+                    <Button
+                      title="View"
+                      onClickFunction={() => handleView(id, idx)}
                       className="px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
-                    >
-                      View
-                    </button>
+                    />
+                    
 
                     {role === "ADMIN" && (
-                      <button
-                        onClick={() => handleDelete(id, idx)}
+                      <>
+                      <Button
+                        title="Delete"
+                        onClickFunction={() => setIsOpen(true)}
                         className={`px-2 py-1 rounded 
                           ${submissionData[idx]?.deleted_at !== null 
                             ? "bg-gray-400 text-white cursor-not-allowed" 
                             : "bg-red-500 text-white hover:bg-red-600"}`}
                         disabled={submissionData[idx]?.deleted_at !== null}
-                      >
-                        {isLoading ? <Loader /> : "Delete"}
-                      </button>
+                      />
+                      <Modal 
+                        isOpen={isOpen}
+                        onClose={()=>setIsOpen(false)}
+                        message="Are You sure You want to Delete User Submission?"
+                        actionButtons={[
+                          {
+                            label : "Confirm",
+                            onClick :() => handleDelete(id,idx)
+                          }
+                        ]}
+                      />
+                      </>
                     )}
                   </td>
                   )}

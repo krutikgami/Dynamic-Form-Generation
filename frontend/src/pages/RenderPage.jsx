@@ -15,13 +15,14 @@ export default function RenderPage() {
   const [schema, setSchema] = useState(null);
   const [submissionData, setSubmissionData] = useState(null);
 
-  useEffect(() => {
-    if (isPreview) {
-      setSchema(schemas);
-      return;
-    }
+    useEffect(() => {
+      if (isPreview) {
+        setSchema(schemas);
+      }
+    }, [isPreview, schemas]);
 
-    if (!formId) return;
+  useEffect(() => {
+    if(!formId || isPreview) return
 
     const loadSchema = async () => {
       try {
@@ -34,15 +35,9 @@ export default function RenderPage() {
       }
     };
 
-    loadSchema();
-  }, [formId, isPreview, schemas]);
-
-  useEffect(() => {
-    if (!formId) return;
-
     const fetchSubmissionData = async () => {
       try {
-        const status = "viewData"; 
+        const status = "viewData";
         const response = await fetch("/api/v1/admin/form/submission/data", {
           method: "POST",
           headers: {
@@ -56,6 +51,13 @@ export default function RenderPage() {
         if (!response.ok) {
           alert(data.message || "Failed to fetch submission data");
         } else {
+          const obj = {
+            id: data?.data?.id,
+            title: data?.data?.title,
+            description: data?.data?.description,
+            schema: data?.data?.schema,
+          };
+          setSchema(obj);
           setSubmissionData(data?.data?.submissions || []);
         }
       } catch (error) {
@@ -63,8 +65,12 @@ export default function RenderPage() {
       }
     };
 
-    fetchSubmissionData();
-  }, [formId, isEdit, isView]);
+    if (isEdit || isView) {
+      fetchSubmissionData();
+    } else {
+      loadSchema()
+    }
+  }, [formId, isEdit, isView,isPreview, email]);
 
   return (
     <div className="flex justify-center items-center w-full">
@@ -76,7 +82,7 @@ export default function RenderPage() {
             isEdit={isEdit}
             isView={isView}
             submissionData={submissionData?.data?.[0] || null}
-            formId={formId}   
+            formId={formId}
           />
         ) : (
           <p>Loading form...</p>

@@ -1,4 +1,4 @@
-import Loader from "../Loader";
+import Button from "../common/Button";
 
 export default function RenderField({
   field,
@@ -90,20 +90,20 @@ export default function RenderField({
 
     case "button":
       return (
-        <button
+        <Button
           key={field.id}
           type="submit"
+          title={isEdit ? "Update" : field.label}
+          className="rounded-lg shadow-md"
+          disabled={isView}
+          showLoader={isLoading}
           style={{
             width: `${field.style?.width || 100}px`,
             height: `${field.style?.height || 40}px`,
             backgroundColor: field.style?.backgroundColor || "#000000",
             color: field.style?.color || "#ffffff",
           }}
-          className="rounded-lg shadow-md"
-          disabled={isLoading || isView}
-        >
-          {isLoading ? <Loader /> : (isEdit ? "Update" : field.label)}
-        </button>
+        />
       );
 
     case "textarea":

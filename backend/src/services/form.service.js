@@ -36,8 +36,8 @@ export class FormService{
         try {
             const { maxSubmissions, startDate, endDate, id, userIds,status } = formData;
 
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            const start = startDate === null ? null : new Date(startDate);
+            const end = startDate === null ? null :  new Date(endDate);
 
             const isFormExist = await formRepo.getFormExists(id);
             if (!isFormExist) {
@@ -90,7 +90,7 @@ export class FormService{
         }
     } 
     
-    async getFormsByIdService(id,role,q){
+    async getFormsByIdService(id,role,q,selectUserId){
         try {
             if(!id){
                 throw new Error('UnAuthorized Access')
@@ -99,7 +99,14 @@ export class FormService{
             if(!isExists){
                 throw new Error('User not Found')
             }
-            return formRepo.getFormsById(id,role,q);
+            
+        let results= await formRepo.getFormsById(id,role,q);
+            if (role === createUserRole && selectUserId) {
+                results = results.filter((entry) =>
+                    entry.accessControls.some(ac => ac.userId === selectUserId)
+                );
+            }
+        return results;
         } catch (error) {
             console.error('Error in FormService.getFormsByIdService', error);
             throw error;
@@ -229,6 +236,7 @@ export class FormService{
             console.log(result)
             let submissions;
             if(status === 'viewData'){
+                console.log(result.schema)
                  const matchedSubmission = result.submissions.find(
                     (sub) => sub.user?.email === email
                 );
@@ -251,12 +259,18 @@ export class FormService{
                 })
             }
 
-        return {
-            id : result.id,
-            title: result.title,
-            description: result.description,
-            submissions
-        };
+            const response = {
+                id: result.id,
+                title: result.title,
+                description: result.description,
+                submissions,
+            };
+
+            if (status === "viewData") {
+            response.schema = result.schema;
+            }
+
+            return response;
         } catch (error) {
             console.error('Error in FormService.getFormSubmissionService', error);
             throw error;

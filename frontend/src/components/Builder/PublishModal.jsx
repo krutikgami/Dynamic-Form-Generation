@@ -1,6 +1,6 @@
 import { useState, useEffect,useCallback } from "react";
-import Loader from "../Loader";
-export default function PublishModal({ isOpen, onClose, onPublish, formData,isLoading }) {
+import Button from "../common/Button";
+export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
   const [status, setStatus] = useState("ACTIVE");
   const [maxSubmissions, setMaxSubmissions] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -173,19 +173,16 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData,isLo
             )}
           </div>
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
+            <Button
+              title="Cancel"
               className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
+              onClickFunction={onClose}
+            />
+            <Button
               type="submit"
+              title="Save"
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-            >
-              {isLoading ? <Loader /> : "Save"}
-            </button>
+            />
           </div>
         </form>
       </div>

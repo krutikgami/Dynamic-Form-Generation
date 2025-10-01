@@ -3,7 +3,7 @@ import { useToast } from "../../components/ToastContainerUtility/ToastContainer.
 export function usePublish() {
   const { showToast } = useToast();
 
-  const publish = async (publishData, onClose) => {
+  const publish = async (publishData,onClose) => {
     try {
       const res = await fetch("/api/v1/admin/form", {
         headers: {

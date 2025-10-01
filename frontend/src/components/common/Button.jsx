@@ -6,7 +6,9 @@ export default function Button({
   type = "button",
   className = "",
   onClickFunction,
+  disabled,
   showLoader = false,
+  style = {}
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,10 +27,11 @@ export default function Button({
     <button
       type={type}
       onClick={handleClick}
-      disabled={isLoading || showLoader}
-      className={`px-4 py-2 rounded-lg transition duration-200 ${
+      disabled={disabled ? disabled : isLoading || showLoader}
+      className={`px-4 py-2 rounded-lg transition duration-200 cursor-pointer${
         isLoading || showLoader ? "opacity-70 cursor-not-allowed" : ""
       } ${className}`}
+      style={style}
     >
       {isLoading || showLoader ? <Loader /> : title}
     </button>

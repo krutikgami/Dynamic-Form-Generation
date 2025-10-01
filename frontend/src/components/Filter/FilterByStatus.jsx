@@ -12,9 +12,9 @@ export default function FilterByStatus({ onChange,formStatusFilter }) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="relative w-auto">
       <label htmlFor="status" className="font-medium">
-        Filter By Status:
+        Filter By Status: 
       </label>
       <select
         id="status"
