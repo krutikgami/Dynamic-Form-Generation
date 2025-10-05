@@ -182,7 +182,7 @@ export class FormService{
 
             return await prisma.$transaction(async (tx)=>{
                 const formSubmission = await formRepo.createFormSubmission({userData,userId},tx)
-                await formRepo.updateFormCount({formId},tx);
+                await formRepo.updateFormCount({formId, data : {submissionCount : {increment : 1}}},tx);
                 await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {increment : 1},lastSubmittedAt : new Date()}},tx)
                 return formSubmission;
             })
@@ -325,7 +325,14 @@ export class FormService{
             if(!userIdToUpdate){
                 throw new Error('User Does not exist')
             }
-            return await formRepo.deleteUserSubmission(formId,userIdToUpdate.id);
+            
+            return await prisma.$transaction(async (tx)=>{
+                const response =  await formRepo.deleteUserSubmission(formId,userIdToUpdate.id,tx);
+                await formRepo.updateFormCount({formId, data : {submissionCount : {decrement : 1}}},tx);
+                await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {decrement : 1},totalViews : {decrement : 1}}},tx)
+                await formRepo.deleteFormViews(formId,userIdToUpdate.id,tx);
+                return response;
+            })
         } catch (error) {
              console.error('Error in FormService.deleteUserSubmissionService', error);
             throw error;

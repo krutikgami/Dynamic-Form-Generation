@@ -5,41 +5,83 @@ import Modal from '../common/Modal.jsx'
 
 export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, onFieldChange}) {
    const [modalOpenId, setModalOpenId] = useState(null)
+   const [dragOverIndex, setDragOverIndex] = useState(null);
+   const [isDraggingField, setIsDraggingField] = useState(false);
+    const [draggedIndex, setDraggedIndex] = useState(null);
 
-    const handleDragOver = (e) => {
-        e.preventDefault()
-        e.dataTransfer.dropEffect = 'copy'
-    }
+     const handleDragOver = (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = isDraggingField ? 'move' : 'copy';
+    };
 
     const handleDrop = useCallback((e) => {
-        e.preventDefault()
-        const fieldType = e.dataTransfer.getData("fieldType")
-        const fromIndex = e.dataTransfer.getData("formIndex")
-        console.log(fieldType)
-        console.log(fromIndex)
-        if (fieldType) {
-            addNewField(fieldType)
-        } else if (fromIndex !== "") {
-            const fields = e.currentTarget.querySelectorAll(".form-canvas")
-            const toIndex = getDropIndex(fields, e.clientY)
-            reorderField(parseInt(fromIndex), toIndex)
-        }
-    }, [schema, onSchemaChange, onFieldChange])
+      e.preventDefault();
+      setDragOverIndex(null);
+      setIsDraggingField(false);
 
+      const fieldType = e.dataTransfer.getData("fieldType");
+      const fromIndexStr = e.dataTransfer.getData("fromIndex");
 
-    const getDropIndex = (fields, clientY) => {
-        for (let i = 0; i < fields.length; i++) {
-            const rect = fields[i].getBoundingClientRect()
-            const midpoint = rect.top + rect.height / 2
+      if (fieldType) {
+        // Adding new field from palette
+        const dropIndex = getDropIndex(e);
+        addNewField(fieldType, dropIndex);
+      } else if (fromIndexStr !== "") {
+        // Reordering existing field
+        const fromIndex = parseInt(fromIndexStr);
+        const toIndex = getDropIndex(e);
+        reorderField(fromIndex, toIndex);
+      }
+    }, [schema]);
 
-            if (clientY < midpoint) {
-             return i
-            }
-        }
-        return fields.length
+   
+   const handleFieldDragOver = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Don't show indicator on the dragged item itself
+    if (draggedIndex === index) {
+      setDragOverIndex(null);
+      return;
     }
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    const isTopHalf = e.clientY < midpoint;
+    
+    // Calculate the target index
+    let targetIndex = isTopHalf ? index : index + 1;
+    
+    // Adjust if we're dragging from above
+    if (draggedIndex !== null && draggedIndex < index && !isTopHalf) {
+      targetIndex = index;
+    }
+    
+    setDragOverIndex(targetIndex);
+  };
 
-    const addNewField = (type)=>{
+
+    const getDropIndex = useCallback((e) => {
+      const dropZone = e.currentTarget;
+      const fieldElements = Array.from(dropZone.querySelectorAll('.form-field-item'));
+      
+      if (fieldElements.length === 0) {
+        return 0;
+      }
+
+      for (let i = 0; i < fieldElements.length; i++) {
+        const rect = fieldElements[i].getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+
+        if (e.clientY < midpoint) {
+          return i;
+        }
+      }
+      
+      return fieldElements.length;
+  }, [dragOverIndex]);
+
+    const addNewField = (type, insertIndex) => {
       
         const newField = {
             id: `field_${Date.now()}`,
@@ -55,7 +97,8 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
             }
         }
 
-        const newFields = [...schema.fields, newField]
+        const newFields = [...schema.fields]
+        newFields.splice(insertIndex, 0, newField);
         onSchemaChange({
         ...schema,
         fields: newFields
@@ -68,23 +111,37 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
     }
 
     const reorderField = (fromIndex, toIndex) => {
-      if (fromIndex === toIndex) return
+    
+      if (fromIndex === toIndex || fromIndex === toIndex - 1) return;
 
-      const newFields = [...schema.fields]
-      const [movedField] = newFields.splice(fromIndex, 1)
-      newFields.splice(toIndex, 0, movedField)
+      const newFields = [...schema.fields];
+      const [movedField] = newFields.splice(fromIndex, 1);
+      
+      const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+      newFields.splice(adjustedToIndex, 0, movedField);
 
       onSchemaChange({
         ...schema,
         fields: newFields
-      })
+      });
+      
+      onFieldChange(movedField.id);
     }
 
-  const handleFieldDragStart = (e, index) => {
+
+   const handleFieldDragStart = (e, index) => {
     e.dataTransfer.setData('fromIndex', index.toString())
     e.dataTransfer.effectAllowed = 'move'
     e.stopPropagation()
+    setIsDraggingField(true);
+    setDraggedIndex(index);
   }
+
+  const handleFieldDragEnd = () => {
+    setDragOverIndex(null);
+    setIsDraggingField(false);
+    setDraggedIndex(null); 
+  };
 
   const deleteField = (index) => {
     const newFields = schema.fields.filter((_, i) => i !== index)
@@ -167,6 +224,10 @@ const renderField = (field, idx) => {
   const isSelected = selectedFieldId === field.id
 
   return (
+  <div key={field.id}>
+        {dragOverIndex === idx && (
+          <div className="h-1 bg-blue-500 rounded my-2 transition-all"></div>
+        )}
     <div
       key={field.id}
       className={`form-canvas relative p-4 border rounded-md shadow-sm transition mb-1
@@ -174,11 +235,16 @@ const renderField = (field, idx) => {
       onClick={() => onFieldChange(field.id)}
       draggable
       onDragStart={(e) => handleFieldDragStart(e, idx)}
+      onDragEnd={handleFieldDragEnd}
+      onDragOver={(e) => handleFieldDragOver(e, idx)}
     >
       <div className="absolute top-2 right-2 flex gap-2">
         <Button
           className="bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded hover:bg-red-600 text-xs cursor-pointer"
-          onClickFunction={(e) =>setModalOpenId(field.id)}
+         onClickFunction={(e) => {
+            e.stopPropagation();
+            setModalOpenId(field.id);
+          }}
           title="x"
         />
 
@@ -197,15 +263,15 @@ const renderField = (field, idx) => {
           ]}
         />
 
-        {/* <div
+        <div
           className="bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded cursor-grab text-sm"
           title="Drag to reorder"
-          onDragStart={(e)=>handleFieldDragStart(e,idx)}
         >
           ::
-        </div> */}
+        </div>
       </div>
       {renderFieldPreview(field)}
+    </div>
     </div>
   )
 }
@@ -240,7 +306,7 @@ const renderField = (field, idx) => {
                     description: e.target.value,
                     })
                 }
-                ></textarea>
+                />
             </div>
 
             <div>
@@ -251,13 +317,19 @@ const renderField = (field, idx) => {
                 className="border-2 border-dashed border-gray-300 rounded-md p-6 h-[40vh] overflow-y-auto bg-gray-50"
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
+                onDragLeave={() => setDragOverIndex(null)}
             >
                 {schema.fields.length === 0 ? (
                     <div className="border-red-50 text-gray-400 py-12 text-center">
                         Drag and drop fields here
                     </div>
                 ) : (
-                    schema.fields.map((field,idx)=>renderField(field,idx))
+                  <>
+                    {schema.fields.map((field, idx) => renderField(field, idx))}
+                    {dragOverIndex === schema.fields.length && (
+                      <div className="h-1 bg-blue-500 rounded my-2 transition-all"></div>
+                    )}
+                  </>
                 )}
             </div>
         </div>

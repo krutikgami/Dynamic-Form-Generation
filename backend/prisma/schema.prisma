@@ -92,6 +92,7 @@ model FormView {
   userId   String?
   user     User?    @relation(fields: [userId], references: [id])
   viewedAt DateTime @default(now())
+  deleted_at DateTime?
 }
 
 enum Role {

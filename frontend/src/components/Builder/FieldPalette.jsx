@@ -1,9 +1,8 @@
 import { FIELD_TYPES } from "../../utilities/AdminPanelConstants/FieldTypes.js"
-function FieldPalette({formIndex}) {
+function FieldPalette() {
 
   const handleDragStart = (e, fieldType) => {
     e.dataTransfer.setData('fieldType', fieldType)
-    e.dataTransfer.setData('formIndex',formIndex.toString())
     e.dataTransfer.effectAllowed = 'copy'
   }
 

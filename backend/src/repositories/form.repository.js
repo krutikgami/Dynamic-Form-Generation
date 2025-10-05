@@ -218,17 +218,13 @@ export class FormRepository{
       }
     }
 
-    async updateFormCount({formId},client=tx){
+    async updateFormCount({formId,data},client=tx){
       try {
         return await client.form.update({
           where : {
             id : formId
           },
-          data : {
-            submissionCount : {
-              increment : 1
-            }
-          }
+          ...(data ? {data} :{}) 
         })
       } catch (error) {
         console.error('DB Error in FormRepository.updateFormCount',error)
@@ -312,16 +308,12 @@ export class FormRepository{
 
     async updateFormSubmission(formId,userId,data){
       try {
-        console.log(formId)
-        console.log(userId)
         const submission = await prisma.submission.findFirst({
           where: {
             formId,
             userId,
           }
         });
-
-        console.log(submission)
 
       if (!submission) throw new Error("Submission not found");
 
@@ -354,36 +346,33 @@ export class FormRepository{
       }
     }
 
-    async deleteUserSubmission(formId,userId){
+    async deleteUserSubmission(formId,userId,client=tx){
       try {
-        await prisma.submission.updateMany({
+        await client.submission.updateMany({
           where: { formId, userId, deleted_at: null },
           data: { deleted_at: new Date() },
         });
-
-      await prisma.form.update({
-        where: { id: formId },
-        data: {
-          submissionCount: { decrement: 1 },
-        },
-      });
-
-      await prisma.formAnalytics.update({
-        where: { formId },
-        data: {
-          totalSubmissions: { decrement: 1 },
-          totalViews: { decrement: 1 },
-        },
-      });
-
-      await prisma.formView.deleteMany({
-        where: { formId, userId },
-      });
-
     return { success: true };
       } catch (error) {
         console.error('DB Error in FormRepository.deleteUserSubmission',error)
         throw new Error('Database error while deleteUserSubmission')
+      }
+    }
+
+    async deleteFormViews(formId,userId,client=tx){
+      try {
+        return await client.formView.updateMany({
+          where : {
+            formId,
+            userId
+          },
+          data :{
+            deleted_at : new Date()
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.deleteFormViews',error)
+        throw new Error('Database error while deleteFormViews')
       }
     }
 }

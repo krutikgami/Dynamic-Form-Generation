@@ -77,7 +77,7 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
      <>
        <div className="form-builder grid grid-cols-12 gap-2 h-[calc(100vh-6rem)] p-4 bg-gray-50 relative">
             <div className="col-span-2 bg-white rounded-lg shadow-md p-4 overflow-y-auto">
-                <FieldPalette formIndex={0}/>
+                <FieldPalette />
             </div>
 
             <div className="col-span-8 bg-white rounded-lg shadow-md p-4 overflow-y-auto">
