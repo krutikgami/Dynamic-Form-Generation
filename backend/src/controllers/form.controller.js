@@ -141,12 +141,13 @@ export const deleteUserSubmission = async(req,res)=>{
     }
 }
 
-// export const deleteAdminForm = async(req,res)=>{
-//     try {
-//         const {formId} = req.body;
-//         const deletedForm = await formService
-//     } catch (error) {
-//         console.error('Controller Error in deleteAdminForm',error)
-//         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
-//     }
-// }
+export const deleteAdminForm = async(req,res)=>{
+    try {
+        const {formId} = req.body;
+        const deletedForm = await formService.deleteFormByIdService(formId);
+        return sendResponse(res,STATUS_CODES.OK,true,"Form Deleted Successfully",null);
+    } catch (error) {
+        console.error('Controller Error in deleteAdminForm',error)
+        return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
+    }
+}

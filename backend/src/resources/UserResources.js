@@ -36,14 +36,17 @@ export const adminFormAnalytics = (formData)=>{
 
 export const adminFormRenderer = (formData)=>{
     if(!formData) return null;
+    const key = formData.isPublic ? "excludedUsers" : "accessControls";
+    const value = formData[key];
     return{
         id : formData.id,
         title : formData.title,
+        isPublic : formData.isPublic,
         description : formData.description,
         startDate : formData.startDate,
         endDate : formData.endDate,
         status : formData.status,
         maxSubmissions : formData.maxSubmissions,
-        accessControls : formData.accessControls
+        [key] : value ?? []
     }
 }

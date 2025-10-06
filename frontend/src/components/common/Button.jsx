@@ -14,7 +14,7 @@ export default function Button({
 
   const handleClick = async (e) => {
     if (!onClickFunction) return;
-
+    e.stopPropagation();
     try {
       setIsLoading(true);
       await onClickFunction(e);

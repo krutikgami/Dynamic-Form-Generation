@@ -34,7 +34,7 @@ export class FormService{
 
     async publishFormService(formData) {
         try {
-            const { maxSubmissions, startDate, endDate, id, userIds,status } = formData;
+            const { maxSubmissions, startDate, endDate, id, userIds,status,isPublic } = formData;
 
             const start = startDate === null ? null : new Date(startDate);
             const end = startDate === null ? null :  new Date(endDate);
@@ -48,6 +48,7 @@ export class FormService{
                 const publishedForm = await formRepo.publishForm(
                     {
                     id,
+                    isPublic : isPublic || false,
                     maxSubmissions: maxSubmissions || null,
                     startDate: start,
                     endDate: end,
@@ -55,24 +56,36 @@ export class FormService{
                     },
                     tx
                 )
-
-                const existingUserIds = isFormExist.accessControls.map(a => a.userId);
+                
+                const existingUserIds = isPublic ? isFormExist?.excludedUsers?.map(a => a.userId) : isFormExist.accessControls.map(a => a.userId);
 
                 const newUserIds = userIds.filter(uid => !existingUserIds.includes(uid));
 
                 if (newUserIds.length > 0) {
-                    await formRepo.createAccessControl(
-                        newUserIds.map(uid => ({ formId: id, userId: uid, role })),
-                        tx
-                    );
+                    if(isPublic){
+                        await formRepo.createExcludedUser(
+                            newUserIds.map(uid => ({ formId: id, userId: uid })), 
+                            tx
+                        )
+                    }else{
+                        await formRepo.createAccessControl(
+                            newUserIds.map(uid => ({ formId: id, userId: uid, role })),
+                            tx
+                        );
+                    }
                 }
 
-                const removeUserIds = existingUserIds.filter((uid) => !userIds.includes(uid));1
-                console.log(removeUserIds);
+                const removeUserIds = existingUserIds.filter((uid) => !userIds.includes(uid));
 
                 if (removeUserIds.length > 0) {
-                    for (const uid of removeUserIds) {
-                        await formRepo.deleteAccessControlByUserID({ formId: id, userId: uid }, tx);
+                    if(isPublic){
+                        for (const uid of removeUserIds) {
+                            await formRepo.deleteExcludedUserByUserID({ formId: id, userId: uid }, tx);
+                        }
+                    }else{
+                        for (const uid of removeUserIds) {
+                            await formRepo.deleteAccessControlByUserID({ formId: id, userId: uid }, tx);
+                        }
                     }
                 }
 
@@ -95,16 +108,21 @@ export class FormService{
             if(!id){
                 throw new Error('UnAuthorized Access')
             }
+
             const isExists = await userRepo.findUSerExists({id});
             if(!isExists){
                 throw new Error('User not Found')
             }
-            
+        
         let results= await formRepo.getFormsById(id,role,q);
             if (role === createUserRole && selectUserId) {
-                results = results.filter((entry) =>
-                    entry.accessControls.some(ac => ac.userId === selectUserId)
-                );
+                results = results.filter((entry) =>{
+                  if (entry.isPublic) {
+                    return entry.excludedUsers?.some(ex => ex.userId === selectUserId);
+                  } else {
+                    return entry.accessControls?.some(ac => ac.userId === selectUserId);
+                  }
+                });
             }
         return results;
         } catch (error) {
@@ -182,7 +200,7 @@ export class FormService{
 
             return await prisma.$transaction(async (tx)=>{
                 const formSubmission = await formRepo.createFormSubmission({userData,userId},tx)
-                await formRepo.updateFormCount({formId, data : {submissionCount : {increment : 1}}},tx);
+                // await formRepo.updateFormCount({formId, data : {submissionCount : {increment : 1}}},tx);
                 await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {increment : 1},lastSubmittedAt : new Date()}},tx)
                 return formSubmission;
             })
@@ -335,6 +353,19 @@ export class FormService{
             })
         } catch (error) {
              console.error('Error in FormService.deleteUserSubmissionService', error);
+            throw error;
+        }
+    }
+
+    async deleteFormByIdService(formId){
+        try {
+            const formExists = await formRepo.getFormExists(formId);
+            if(!formExists){
+                throw new Error('Form Doesn`t exists')
+            }
+            return await formRepo.deleteFormById(formId); 
+        } catch (error) {
+            console.error('Error in FormService.deleteFormByIdService', error);
             throw error;
         }
     }

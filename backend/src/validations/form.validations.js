@@ -7,22 +7,37 @@ export const createFormSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
 });
 
-export const publishFormSchema = z.object({
-  id: z.string().min(1, "Form ID is required"),
-  userIds: z.array(z.string()).nonempty("User ids for access control are required"),
-  status: z.string().optional(),
-  maxSubmissions: z.number().int("Must be an integer").nullable().optional(),
-  startDate: z
-    .string()
-    .nullable()
-    .optional()
-    .refine((val) => !isNaN(new Date(val).getTime()), { message: "Invalid startDate format" }),
-  endDate: z
-    .string()
-    .nullable()
-    .optional()
-    .refine((val) => !isNaN(new Date(val).getTime()), { message: "Invalid endDate format" }),
-});
+export const publishFormSchema = z
+  .object({
+    id: z.string().min(1, "Form ID is required"),
+    userIds: z.array(z.string()).optional(),
+    status: z.string().optional(),
+    maxSubmissions: z.number().int("Must be an integer").nullable().optional(),
+    startDate: z
+      .string()
+      .nullable()
+      .optional()
+      .refine((val) => !val || !isNaN(new Date(val).getTime()), {
+        message: "Invalid startDate format",
+      }),
+    endDate: z
+      .string()
+      .nullable()
+      .optional()
+      .refine((val) => !val || !isNaN(new Date(val).getTime()), {
+        message: "Invalid endDate format",
+      }),
+    isPublic: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isPublic === false && (!data.userIds || data.userIds.length === 0)) {
+      ctx.addIssue({
+        path: ["userIds"],
+        message: "User IDs are required when isPublic is false",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+  });
 
 export const updateFormSchema = z.object({
   id: z.string().min(1, "Form ID is required"),

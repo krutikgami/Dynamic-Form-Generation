@@ -8,6 +8,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
   const [textareaValue, setTextareaValue] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [isPublic, setIsPublic] = useState(false);
 
   useEffect(() => {
     if (formData) {
@@ -16,13 +17,21 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       setMaxSubmissions(formData.maxSubmissions ?? "");
       setStartDate(formData.startDate ? formData.startDate.split("T")[0] : "");
       setEndDate(formData.endDate ? formData.endDate.split("T")[0] : "");
-      if (formData.accessControls) {
+      setIsPublic(formData.isPublic || false);
+       if (formData.accessControls && !formData.isPublic) {
         const preUsers = formData.accessControls.map((d) => ({
           id: d.userId,
           email: d.user?.email || "",
         }));
         setSelectedUsers(preUsers);
         setTextareaValue(preUsers.map((u) => u.email).join(", "));
+      } else if (formData.excludedUsers && formData.isPublic) {
+        const preExcluded = formData.excludedUsers.map((d) => ({
+          id: d.userId,
+          email: d.user?.email || "",
+        }));
+        setSelectedUsers(preExcluded);
+        setTextareaValue(preExcluded.map((u) => u.email).join(", "));
       }
     }
   }, [formData, isOpen]);
@@ -89,6 +98,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
     const payload = {
       id: formData.id,
       status,
+      isPublic,
       maxSubmissions: maxSubmissions ? parseInt(maxSubmissions) : null,
       startDate: startDate || null,
       endDate: endDate || null,
@@ -147,14 +157,34 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
               />
             </div>
           </div>
-          <div className="relative">
+
+           <div className="flex items-center gap-2">
+            <input
+              id="isPublic"
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <label htmlFor="isPublic" className="text-sm font-medium">
+              Access to all users
+            </label>
+          </div>
+
+           <div className="relative">
             <label className="block text-sm font-medium mb-1">
-              User Emails (comma separated)
+              {isPublic
+                ? "Exclude Users (comma separated)"
+                : "User Emails (comma separated)"}
             </label>
             <textarea
               rows={2}
               className="w-full border rounded-md px-3 py-2"
-              placeholder="Type emails, suggestions will appear..."
+              placeholder={
+                isPublic
+                  ? "Type emails of users to exclude..."
+                  : "Type emails, suggestions will appear..."
+              }
               value={textareaValue}
               onChange={handleTextareaChange}
             />

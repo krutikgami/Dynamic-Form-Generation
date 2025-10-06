@@ -21,6 +21,7 @@ export class FormRepository{
             id : formData.id
           },
           data :{
+            isPublic : formData.isPublic,
             maxSubmissions : formData.maxSubmissions,
             status : formData.status,
             startDate : formData.startDate,
@@ -37,10 +38,12 @@ export class FormRepository{
       try {
         return await prisma.form.findUnique({
           where:{
-            id
+            id,
+            deleted_at : null
           },
           include:{
-            accessControls : true
+            accessControls : true,
+            excludedUsers : true
           }
         })
       } catch (error) {
@@ -65,6 +68,20 @@ export class FormRepository{
       }
     }
 
+    async createExcludedUser(formData,client=tx){
+      try {
+        return await client.excludedUser.create({
+          data : {
+            formId: formData[0].formId,
+            userId : formData[0].userId,
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.createExcludedUser',error)
+        throw new Error('Database error while creating Excluded User')
+      }
+    }
+
     async createFormAnalytics(formData,client=tx){
       try {
         return await client.formAnalytics.create({
@@ -79,11 +96,22 @@ export class FormRepository{
     async getFormsById(id,role,q){
       try {
         if(role === createUserRole){
-          let where = q !== 'All' ? { userId : id,status: q} : { userId : id}
+          let where = q !== 'All' ? { userId : id,status: q , deleted_at : null} : { userId : id , deleted_at : null}
           return await prisma.form.findMany({
             where,
             include:{
               accessControls : {
+                select :{
+                  userId : true,
+                  formId: true,
+                  user :{
+                    select :{
+                      email : true
+                    }
+                  }
+                }
+              },
+              excludedUsers : {
                 select :{
                   userId : true,
                   formId: true,
@@ -103,6 +131,7 @@ export class FormRepository{
             },
           })
         }
+
         const formIds = await prisma.accessControl.findMany({
           where : {
             userId : id
@@ -117,10 +146,12 @@ export class FormRepository{
         const forms = await Promise.all(
           formattedFormIds.map(ids => 
             prisma.form.findMany({
-              where: { id : ids,
+              where: { 
+                id : ids,
+                deleted_at : null,
                 status : {
-                notIn : STATUSNOTIN
-              } 
+                  notIn : STATUSNOTIN,
+                } 
             },
               include: { 
                 accessControls: {
@@ -132,6 +163,24 @@ export class FormRepository{
             })
           )
         );
+        
+        //fetch public forms where user is not excluded
+        const publicForms = await prisma.form.findMany({
+          where: {
+            isPublic : true,
+            deleted_at : null,
+            status : {
+              notIn : STATUSNOTIN
+            },
+            excludedUsers : {
+              none : {
+                userId : id
+              }
+            }
+          },
+        })
+
+        forms.push(publicForms);
         const flattenForms = forms.flat();
         return flattenForms;
       } catch (error) {
@@ -183,9 +232,24 @@ export class FormRepository{
         })
       } catch (error) {
         console.error('DB Error in FormRepository.updateAccessControl',error)
-        throw new Error('Database error while updating AccessControl Forms')
+        throw new Error('Database error while deleting AccessControl Forms')
       }
     }
+
+    async deleteExcludedUserByUserID({formId,userId},client=tx){
+      try {
+        return await client.excludedUser.deleteMany({
+          where :{
+            formId,
+            userId
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.deleteExcludedUserByUserID',error)
+        throw new Error('Database error while deleting exclude user access Forms')
+      }
+    }
+
 
     async createFormSubmission({userData,userId},client=tx){
       try {
@@ -373,6 +437,22 @@ export class FormRepository{
       } catch (error) {
         console.error('DB Error in FormRepository.deleteFormViews',error)
         throw new Error('Database error while deleteFormViews')
+      }
+    }
+
+    async deleteFormById(formId){
+      try {
+        return await prisma.form.update({
+          where :{
+            id : formId,
+          },
+          data :{
+            deleted_at : new Date()
+          }
+        })
+      } catch (error) {
+        console.error('DB Error in FormRepository.deleteFormById',error)
+        throw new Error('Database error while deleteFormById')
       }
     }
 }

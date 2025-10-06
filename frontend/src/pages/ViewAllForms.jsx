@@ -7,14 +7,18 @@ import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
 import { formStatusFilter, getFormService, roleAdmin } from "../utilities/AdminPanelConstants/FieldTypes.js";
 import Button from "../components/common/Button.jsx";
 import Search from "../components/Filter/Search.jsx";
+import Modal from "../components/common/Modal.jsx";
+import { useToast } from "../components/ToastContainerUtility/ToastContainer.jsx";
 
 export default function ViewAllForms({role}) {
+  const {showToast} = useToast();
   const {publish} = usePublish();
   const [forms, setForms] = useState([]);
   const [idx, setIdx] = useState(null);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [value, setValue] = useState('All');
   const [selectedId, setSelectedId] = useState(null);
+  const [isOpenModalIdx, setIsOpenModalIdx] = useState(null);
   const navigate = useNavigate();
 
   const fetchForms = async(statusValue, userId = null) => {
@@ -42,14 +46,37 @@ export default function ViewAllForms({role}) {
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message);
+        showToast(data.message, data.success);
+        return;
       }
-      console.log(data);
+      showToast(data.message, data.success);
     } catch (error) {
       console.error('Error in ViewForm', error);
-      alert('Error: ', error.message);
+      showToast('Error in Viewing Form', false);
     }
   } 
+
+  const handleDelete = async(formId) => {
+    try {
+      const response = await fetch('/api/v1/admin/form', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({formId})
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showToast(data.message, data.success);
+        return;
+      }
+      showToast(data.message, data.success);
+      setIsOpenModalIdx(null);
+    } catch (error) {
+      console.error('Error in Deleting Form', error);
+      showToast('Error in Deleting Form', false);
+    }
+  }
 
   const handleSelected = (userId) => {
     console.log(userId);
@@ -111,6 +138,28 @@ export default function ViewAllForms({role}) {
                   e.stopPropagation();
                   navigate('/builder', {state: {formId: form.id, isEdit: true}});
                 }}
+              />
+
+              <Button
+                title="🗑️"
+                className="bg-red-500 border rounded-2xl text-white cursor-pointer"
+                onClickFunction={(e) => {
+                  e.stopPropagation();
+                  setIsOpenModalIdx(index);
+                }}
+              />
+
+              <Modal 
+                isOpen={isOpenModalIdx === index}
+                onClose={() => setIsOpenModalIdx(null)}
+                message="Confirm You want to delete this form?"
+                actionButtons={[
+                  {
+                    label: "Delete",
+                    className: "bg-red-500 text-white",
+                    onClick: () => handleDelete(form.id)
+                  }
+                ]}
               />
             </div>
             }

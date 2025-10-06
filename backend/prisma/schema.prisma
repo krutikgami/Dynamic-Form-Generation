@@ -19,6 +19,7 @@ model User {
   forms          Form[]
   submissions    Submission[]
   accessControls AccessControl[]
+  excludedUsers  ExcludedUser[]
   formViews      FormView[]
   createdForms   Form[]          @relation("CreatedForms")
   updatedForms   Form[]          @relation("UpdatedForms")
@@ -44,10 +45,12 @@ model Form {
   submissionCount Int             @default(0)
   startDate       DateTime?       // form availability start
   endDate         DateTime?       // form expiry
+  isPublic       Boolean         @default(false) //Give access to public users
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
   deleted_at      DateTime?
 
+  excludedUsers   ExcludedUser[]
   submissions     Submission[]
   accessControls  AccessControl[]
   analytics       FormAnalytics?
@@ -73,6 +76,14 @@ model AccessControl {
   userId  String
   user    User?   @relation(fields: [userId], references: [id])
   role    Role?
+}
+
+model ExcludedUser{
+  id      String  @id @default(uuid())
+  formId  String
+  form    Form    @relation(fields: [formId], references: [id])
+  userId  String
+  user    User?   @relation(fields: [userId], references: [id])
 }
 
 model FormAnalytics {
