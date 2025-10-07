@@ -1,10 +1,11 @@
 import {STATUS_CODES} from './constants/statusCodeConstants.js'
 
-export const sendResponse = (res, statusCode = STATUS_CODES.OK, success = true, message, data = null) => {
+export const sendResponse = (res, statusCode = STATUS_CODES.OK, success = true, message, data = null,metaData = null) => {
     return res.status(statusCode).json({
         success,
         message,
-        data
+        data,
+        meta: metaData
     });
 }
 

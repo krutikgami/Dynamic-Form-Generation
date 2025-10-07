@@ -28,6 +28,7 @@ export const publishFormSchema = z
         message: "Invalid endDate format",
       }),
     isPublic: z.boolean().optional(),
+    isEditable: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.isPublic === false && (!data.userIds || data.userIds.length === 0)) {

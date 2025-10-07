@@ -55,8 +55,9 @@ export default function DynamicForm({ schema,isPreview,isEdit,submissionData,isV
           body : JSON.stringify(payload)
         })
         const data = await response.json();
+        console.log('Form submission response:',data)
         if(!response.ok){
-          if(data?.errors){
+          if(Array.isArray(data?.errors) && data?.errors.length > 0){
             data?.errors.map((err)=> showToast(err.message,data.success))
           }else{
             showToast(data.message,data.success)
@@ -67,7 +68,7 @@ export default function DynamicForm({ schema,isPreview,isEdit,submissionData,isV
       }
    } catch (error) {
       console.error('Error in submitting Form',error.message)
-      alert(error.message)
+      showToast('Error in submitting Form',false)
    }finally{
       setIsLoading(false)
    }

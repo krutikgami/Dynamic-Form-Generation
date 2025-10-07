@@ -4,11 +4,12 @@ import PublishModal from "../components/Builder/PublishModal";
 import { usePublish } from "../utilities/services/publishService.js";
 import { formsService } from "../utilities/services/formsService.js";
 import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
-import { formStatusFilter, getFormService, roleAdmin } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import { formStatusFilter, getFormService, Limit, Page, roleAdmin } from "../utilities/AdminPanelConstants/FieldTypes.js";
 import Button from "../components/common/Button.jsx";
 import Search from "../components/Filter/Search.jsx";
 import Modal from "../components/common/Modal.jsx";
 import { useToast } from "../components/ToastContainerUtility/ToastContainer.jsx";
+import Pagination from "../components/common/Pagination.jsx";
 
 export default function ViewAllForms({role}) {
   const {showToast} = useToast();
@@ -19,12 +20,15 @@ export default function ViewAllForms({role}) {
   const [value, setValue] = useState('All');
   const [selectedId, setSelectedId] = useState(null);
   const [isOpenModalIdx, setIsOpenModalIdx] = useState(null);
+  const [page, setPage] = useState(Page);
+  const [meta,setMeta] = useState({});
   const navigate = useNavigate();
 
   const fetchForms = async(statusValue, userId = null) => {
     try {
-      const data = await formsService(statusValue, getFormService.renderer, userId);
+      const {data,meta} = await formsService(statusValue, getFormService.renderer, userId,page,Limit);
       setForms(data || []);
+      setMeta(meta)
     } catch (error) {
       console.error('Error Fetching Forms', error);
     }
@@ -32,7 +36,7 @@ export default function ViewAllForms({role}) {
 
   useEffect(() => {
     fetchForms(value, selectedId);
-  }, [value, selectedId]);
+  }, [value, selectedId,page]);
    
   const handleView = async(formId) => {
     console.log(formId);
@@ -174,6 +178,10 @@ export default function ViewAllForms({role}) {
           formData={forms[idx]}
         />
       )}
+
+      <div className="mt-4">
+        <Pagination page={page} setPage={setPage} totalPages={meta?.totalPages || 1}/>
+      </div>
     </div>
   );
 }

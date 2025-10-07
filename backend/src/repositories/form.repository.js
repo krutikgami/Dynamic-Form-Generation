@@ -22,6 +22,7 @@ export class FormRepository{
           },
           data :{
             isPublic : formData.isPublic,
+            isEditable : formData.isEditable,
             maxSubmissions : formData.maxSubmissions,
             status : formData.status,
             startDate : formData.startDate,
@@ -93,102 +94,79 @@ export class FormRepository{
       }
     }
     
-    async getFormsById(id,role,q){
+    async getFormsById(id, role, q, skip, limit, selectUserId) {
       try {
-        if(role === createUserRole){
-          let where = q !== 'All' ? { userId : id,status: q , deleted_at : null} : { userId : id , deleted_at : null}
-          return await prisma.form.findMany({
-            where,
-            include:{
-              accessControls : {
-                select :{
-                  userId : true,
-                  formId: true,
-                  user :{
-                    select :{
-                      email : true
-                    }
-                  }
-                }
-              },
-              excludedUsers : {
-                select :{
-                  userId : true,
-                  formId: true,
-                  user :{
-                    select :{
-                      email : true
-                    }
-                  }
-                }
-              },
-              analytics :{
-                select :{
-                  totalViews : true,
-                  totalSubmissions : true
-                }
-              }
-            },
-          })
+        let where = { deleted_at: null };
+
+        if (role === createUserRole) {
+          where.userId = id;
+          if (q && q !== 'All') where.status = q;
+
+          if (selectUserId) {
+            where.OR = [
+              { isPublic: true, excludedUsers: { none: { userId: selectUserId } } },
+              { accessControls: { some: { userId: selectUserId } } },
+            ];
+          }
+        } else {
+          where.status = { notIn: STATUSNOTIN };
+          where.OR = [
+            { accessControls: { some: { userId: id } } },
+            { isPublic: true, excludedUsers: { none: { userId: id } } },
+          ];
         }
 
-        const formIds = await prisma.accessControl.findMany({
-          where : {
-            userId : id
+        return await prisma.form.findMany({
+          where,
+          include: {
+            accessControls: { select: { userId: true, formId: true, user: { select: { email: true } } } },
+            excludedUsers: { select: { userId: true, formId: true, user: { select: { email: true } } } },
+            analytics: { select: { totalViews: true, totalSubmissions: true } },
           },
-          select :{
-            formId : true
-          }
-        })
-
-        const formattedFormIds = formIds.map((id)=>id.formId)
-
-        const forms = await Promise.all(
-          formattedFormIds.map(ids => 
-            prisma.form.findMany({
-              where: { 
-                id : ids,
-                deleted_at : null,
-                status : {
-                  notIn : STATUSNOTIN,
-                } 
-            },
-              include: { 
-                accessControls: {
-                  where :{
-                    userId : id 
-                  }
-                } 
-              }
-            })
-          )
-        );
-        
-        //fetch public forms where user is not excluded
-        const publicForms = await prisma.form.findMany({
-          where: {
-            isPublic : true,
-            deleted_at : null,
-            status : {
-              notIn : STATUSNOTIN
-            },
-            excludedUsers : {
-              none : {
-                userId : id
-              }
-            }
-          },
-        })
-
-        forms.push(publicForms);
-        const flattenForms = forms.flat();
-        return flattenForms;
+          skip,
+          take: limit,
+          orderBy: { created_at: 'desc' },
+        });
       } catch (error) {
-        console.error('DB Error in FormRepository.getFormsById',error)
-        throw new Error('Database error while getting Forms')
+        console.error('DB Error in FormRepository.getFormsById', error);
+        throw new Error('Database error while getting Forms');
       }
     }
-    
+
+
+   async countForms(id, role, q, selectUserId) {
+      try {
+        let where = { deleted_at: null };
+
+        if (role === createUserRole) {
+          where.userId = id;
+          if (q && q !== 'All') where.status = q;
+          if (selectUserId) {
+            where.OR = [
+              {
+                isPublic: true,
+                excludedUsers: { none: { userId: selectUserId } },
+              },
+              {
+                accessControls: { some: { userId: selectUserId } },
+              },
+            ];
+          }
+        } else {
+          where.status = { notIn: STATUSNOTIN };
+          where.OR = [
+            { accessControls: { some: { userId: id } } },
+            { isPublic: true, excludedUsers: { none: { userId: id } } },
+          ];
+        }
+
+        return await prisma.form.count({ where });
+      } catch (error) {
+        console.error('DB Error in FormRepository.countForms', error);
+        throw new Error('Database error while counting Forms');
+      }
+    }
+
     async getFormAnalyticsById({formId},client=tx){
       try {
         return await client.formAnalytics.findFirst({
@@ -329,7 +307,8 @@ export class FormRepository{
         return await prisma.formView.findFirst({
           where : {
             formId,
-            userId
+            userId,
+            deleted_at : null
           }
         })
       } catch (error) {
@@ -338,35 +317,57 @@ export class FormRepository{
       }
     }
 
-    async getFormSubmissionData(formId,submissionWhere={}){
+    async getFormSubmissionData(formId, submissionWhere = {}, skip , limit) {
       try {
-        return await prisma.form.findUnique({
-          where : {
-            id : formId
-          },
-          include : {
-            submissions : {
-              where : submissionWhere,
-              select : {
-                id : true,
-                formId : true,
-                userId : true,
-                data : true,
-                deleted_at : true,
-                created_at : true,
-                user : {
-                  select : {
+        const hasSubmissionWhere = Object.keys(submissionWhere || {}).length > 0;
+        let baseQuery = {
+          where: { id: formId },
+          include: {
+            submissions: {
+              where: submissionWhere,
+              select: {
+                id: true,
+                formId: true,
+                userId: true,
+                data: true,
+                deleted_at: true,
+                created_at: true,
+                user: {
+                  select: {
                     name: true,
-                    email : true
-                  }
-                }
-              }
-            }
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        };
+
+        if (hasSubmissionWhere) {
+          const safeSkip = Number.isFinite(skip) ? parseInt(skip) : 0;
+          const safeLimit = Number.isFinite(limit) ? parseInt(limit) : 1;
+          baseQuery.include.submissions.skip = safeSkip;
+          baseQuery.include.submissions.take = safeLimit;
+        }
+        return await prisma.form.findUnique(baseQuery);
+      } catch (error) {
+        console.error("DB Error in FormRepository.getFormSubmissionData", error);
+        throw new Error("Database error while getFormSubmissionData");
+      }
+    }
+
+
+    async countFormSubmissions(formId,submissionWhere={}){
+      try {
+        return await prisma.submission.count({
+          where : {
+            formId,
+            ...submissionWhere
           }
         })
       } catch (error) {
-        console.error('DB Error in FormRepository.getFormSubmissionData',error)
-        throw new Error('Database error while getFormSubmissionData')
+        console.error('DB Error in FormRepository.countFormSubmissions',error)
+        throw new Error('Database error while countFormSubmissions')
       }
     }
 

@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import DynamicForm from "../components/Renderer/DynamicForm";
 import { useLocation } from "react-router-dom";
 import { formSchemaService } from "../utilities/services/formSchemaService.js";
-
+import { useToast } from "../components/ToastContainerUtility/ToastContainer.jsx";
 export default function RenderPage() {
+  const { showToast } = useToast();
   const location = useLocation();
   const schemas = location?.state?.schema;
   const formId = location?.state?.formId;
@@ -49,7 +50,7 @@ export default function RenderPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.message || "Failed to fetch submission data");
+          showToast(data?.message, data?.success);
         } else {
           const obj = {
             id: data?.data?.id,
@@ -62,6 +63,7 @@ export default function RenderPage() {
         }
       } catch (error) {
         console.error("Error while fetching submission data:", error);
+        showToast("Error while fetching submission data", false);
       }
     };
 

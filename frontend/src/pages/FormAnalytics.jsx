@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { formsService } from "../utilities/services/formsService.js";
 import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
-import { tableHeads,defaultDate, getFormService,dateLimit ,MaxSubmissions, formStatusFilter } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import { tableHeads,defaultDate, getFormService,dateLimit ,MaxSubmissions, formStatusFilter,Page,Limit } from "../utilities/AdminPanelConstants/FieldTypes.js";
 import TableRender from "../components/Manager/TableRender.jsx";
 
 export default function FormAnalytics() {
   const [value, setValue] = useState("All");
   const [formData, setFormData] = useState([]);
-
+  const [page, setPage] = useState(Page);
+  const [meta,setMeta] = useState({});
   const fetchForms = async (val) => {
     try {
-      const data = await formsService(val,getFormService.analytics);
+      const {data,meta} = await formsService(val,getFormService.analytics,null,page,Limit);
       console.log(data)
       const rows = (data || []).map((form) => ({
         ID: form.id,
@@ -26,6 +27,7 @@ export default function FormAnalytics() {
       }));
 
       setFormData(rows);
+      setMeta(meta)
     } catch (error) {
       console.error("Error Fetching Forms", error);
     }
@@ -33,7 +35,7 @@ export default function FormAnalytics() {
 
   useEffect(() => {
     fetchForms(value);
-  }, [value]);
+  }, [value,page]);
 
   return (
     <div className="p-6">
@@ -41,7 +43,10 @@ export default function FormAnalytics() {
         <h1 className="text-2xl font-bold mb-6">All Forms</h1>
         <FilterByStatus onChange={setValue} formStatusFilter={formStatusFilter}/>
       </div>
-        <TableRender 
+        <TableRender
+          page={page}
+          setPage={setPage}
+          totalPages={meta?.totalPages || 1} 
           tableHeadings={tableHeads}
           submissionData={formData}
           formStatusFilter={formStatusFilter}

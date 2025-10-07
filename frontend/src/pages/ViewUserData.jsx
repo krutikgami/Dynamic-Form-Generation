@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import TableRender from "../components/Manager/TableRender";
-import { formAnalyticsTableHeadings } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import { formAnalyticsTableHeadings,Page,Limit } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import { useToast } from "../components/ToastContainerUtility/ToastContainer.jsx";
 export default function ViewUserData({ role }) {
   const location = useLocation();
+  const { showToast } = useToast();
   const { formId } = location.state || {};
   const [formData, setFormData] = useState(null);
+  const [page,setPage] = useState(Page);
+  const [meta,setMeta] = useState({});
 
 
   useEffect(() => {
@@ -18,22 +22,24 @@ export default function ViewUserData({ role }) {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ formId }),
+          body: JSON.stringify({ formId,page,limit:Limit }),
         });
-
         const data = await response.json();
         if (!response.ok) {
-          alert(data.message);
+          showToast(data?.message, data?.success);
         } else {
           setFormData(data?.data || null);
+          setMeta(data?.meta)
+          showToast(data?.message, data?.success);
         }
       } catch (error) {
         console.error("Error While Getting Submission Data", error);
+        showToast("Error While Getting Submission Data", false);
       }
     };
 
     fetchFormData();
-  }, [formId]);
+  }, [formId,page]);
 
   if (!formData) {
     return <p className="p-6">Loading form data...</p>;
@@ -41,7 +47,10 @@ export default function ViewUserData({ role }) {
 
   return (
     <div className="p-6">
-     <TableRender 
+     <TableRender
+        page={page}
+        setPage={setPage}
+        totalPages={meta?.totalPages || 1} 
         tableHeadings={formAnalyticsTableHeadings}
         title={formData.title}
         description={formData.description}

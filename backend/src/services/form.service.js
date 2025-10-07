@@ -1,9 +1,8 @@
 import {FormRepository} from '../repositories/form.repository.js'
 import { UserRepository } from '../repositories/user.repository.js';
 import { prisma } from '../utilities/prisma.constants.js';
-import {status,role, createUserRole, user} from '../utilities/constants/codeConstants.js'
-import { email } from 'zod';
-import { en } from 'zod/v4/locales';
+import {status,role, createUserRole, user, view} from '../utilities/constants/codeConstants.js'
+import { getUserFormSubmission,getAdminFormSubmission, getMetaData } from '../resources/UserResources.js';
 const formRepo = new FormRepository();
 const userRepo = new UserRepository();
 
@@ -34,7 +33,7 @@ export class FormService{
 
     async publishFormService(formData) {
         try {
-            const { maxSubmissions, startDate, endDate, id, userIds,status,isPublic } = formData;
+            const { maxSubmissions, startDate, endDate, id, userIds,status,isPublic,isEditable } = formData;
 
             const start = startDate === null ? null : new Date(startDate);
             const end = startDate === null ? null :  new Date(endDate);
@@ -49,6 +48,7 @@ export class FormService{
                     {
                     id,
                     isPublic : isPublic || false,
+                    isEditable : isEditable || false,
                     maxSubmissions: maxSubmissions || null,
                     startDate: start,
                     endDate: end,
@@ -103,28 +103,22 @@ export class FormService{
         }
     } 
     
-    async getFormsByIdService(id,role,q,selectUserId){
+    async getFormsByIdService(id, role, q, selectUserId, page, limit) {
         try {
-            if(!id){
-                throw new Error('UnAuthorized Access')
-            }
+            if (!id) throw new Error('UnAuthorized Access');
 
-            const isExists = await userRepo.findUSerExists({id});
-            if(!isExists){
-                throw new Error('User not Found')
-            }
-        
-        let results= await formRepo.getFormsById(id,role,q);
-            if (role === createUserRole && selectUserId) {
-                results = results.filter((entry) =>{
-                  if (entry.isPublic) {
-                    return entry.excludedUsers?.some(ex => ex.userId === selectUserId);
-                  } else {
-                    return entry.accessControls?.some(ac => ac.userId === selectUserId);
-                  }
-                });
-            }
-        return results;
+            const isExists = await userRepo.findUSerExists({ id });
+            if (!isExists) throw new Error('User not Found');
+
+            const skip = (page - 1) * limit;
+            
+            const totalRecords = await formRepo.countForms(id, role, q, selectUserId);
+            const totalPages = Math.ceil(totalRecords / limit);
+            const meta = getMetaData(totalRecords, totalPages, page);
+
+            const results = await formRepo.getFormsById(id, role, q, skip, parseInt(limit), selectUserId);
+
+            return { results, meta };
         } catch (error) {
             console.error('Error in FormService.getFormsByIdService', error);
             throw error;
@@ -197,11 +191,11 @@ export class FormService{
                 }
             }
 
-
             return await prisma.$transaction(async (tx)=>{
                 const formSubmission = await formRepo.createFormSubmission({userData,userId},tx)
+                //applied database trigger for incrementing count
                 // await formRepo.updateFormCount({formId, data : {submissionCount : {increment : 1}}},tx);
-                await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {increment : 1},lastSubmittedAt : new Date()}},tx)
+                // await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {increment : 1},lastSubmittedAt : new Date()}},tx)
                 return formSubmission;
             })
         } catch (error) {
@@ -240,20 +234,28 @@ export class FormService{
         }
     }
 
-    async getFormSubmissionService(formId,userId,role,status,email){
+    async getFormSubmissionService(formId,userId,role,status,email,page,limit){
         try {
             const formExists = await formRepo.getFormExists(formId);
             if(!formExists){
                 throw new Error('Form Doesn`t exists')
             }
-            let submissionWhere = {};
+            const submissionWhere = {};
             if (role === user && userId) {
-                submissionWhere = { userId };
+                submissionWhere.userId = userId;
             }
-            const result = await formRepo.getFormSubmissionData(formId,submissionWhere)
+
+            const skip = parseInt((page - 1) * limit);
+            const take = parseInt(limit);
+
+            const totalRecords = await formRepo.countFormSubmissions(formId, submissionWhere);
+            const totalPages = Math.ceil(totalRecords / take);
+            const meta = getMetaData(totalRecords, totalPages, page);
+
+            const result = await formRepo.getFormSubmissionData(formId,submissionWhere,skip,parseInt(limit));
             console.log(result)
             let submissions;
-            if(status === 'viewData'){
+            if(status === view){
                 console.log(result.schema)
                  const matchedSubmission = result.submissions.find(
                     (sub) => sub.user?.email === email
@@ -268,11 +270,10 @@ export class FormService{
                 }
             }else{
                 submissions = result.submissions.map((submission)=>{
-                    return {
-                        email : submission.user.email,
-                        name : submission.user.name,
-                        deleted_at : submission.deleted_at,
-                        created_at : submission.created_at
+                    if(role === user){
+                       return getUserFormSubmission(submission,formExists); 
+                    }else if(role === createUserRole){
+                       return getAdminFormSubmission(submission);
                     }
                 })
             }
@@ -284,11 +285,11 @@ export class FormService{
                 submissions,
             };
 
-            if (status === "viewData") {
-            response.schema = result.schema;
+            if (status === view) {
+                response.schema = result.schema;
             }
 
-            return response;
+            return {response,meta};
         } catch (error) {
             console.error('Error in FormService.getFormSubmissionService', error);
             throw error;
@@ -301,24 +302,43 @@ export class FormService{
             if(!submissionExist){
                 throw new Error('Submission Doesn`t Exist You can not Update details')
             }
-            console.log(data)
-            console.log(userId)
+            const formExists = await formRepo.getFormExists(formId);
+            if(!formExists){
+                throw new Error('Form Doesn`t exists')
+            }
+
+            if(role === user && !formExists.isEditable){
+                throw new Error('Form is not Editable')
+            }
+
+            if(role === user && formExists.endDate){
+                const nowDate = new Date();
+                nowDate.setHours(0, 0, 0, 0);
+
+                const endDate = new Date(formExists.endDate);
+                endDate.setHours(0, 0, 0, 0);
+
+                if (nowDate.getTime() > endDate.getTime()) {
+                    throw new Error('Form Expired!!');
+                }
+            }
+
             let userExists ;
             if(role === createUserRole){
                 userExists = await userRepo.findUSerExists({email : userId})
             }
-            // const existingSubmission = submissionExist.submissions[0];
-            // const existingKeys = Object.keys(existingSubmission.data[0] || {}); 
-            // const newKeys = Object.keys(data[0] || {});
+            const existingSubmission = submissionExist.submissions[0];
+            const existingKeys = Object.keys(existingSubmission.data[0] || {}); 
+            const newKeys = Object.keys(data || {});
 
-            // const missingKeys = existingKeys.filter(k => !newKeys.includes(k));
-            // const extraKeys = newKeys.filter(k => !existingKeys.includes(k));
+            const missingKeys = existingKeys.filter(k => !newKeys.includes(k));
+            const extraKeys = newKeys.filter(k => !existingKeys.includes(k));
 
-            // const keyMismatch = existingKeys.some((k, idx) => k !== newKeys[idx]);
+            const keyMismatch = existingKeys.some((k, idx) => k !== newKeys[idx]);
 
-            // if (missingKeys.length > 0 || extraKeys.length > 0 || keyMismatch) {
-            //     throw new Error("Invalid field data: submission schema mismatch");
-            // }
+            if (missingKeys.length > 0 || extraKeys.length > 0 || keyMismatch) {
+                throw new Error("Invalid field data: submission schema mismatch");
+            }
 
             const userIdToUpdate = userExists ? userExists.id : userId
             return await formRepo.updateFormSubmission(formId, userIdToUpdate, data);

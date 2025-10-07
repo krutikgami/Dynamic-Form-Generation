@@ -39,7 +39,6 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
     e.preventDefault();
     e.stopPropagation();
     
-    // Don't show indicator on the dragged item itself
     if (draggedIndex === index) {
       setDragOverIndex(null);
       return;
@@ -60,7 +59,7 @@ export default function BuilderCanvas({schema, onSchemaChange, selectedFieldId, 
     setDragOverIndex(targetIndex);
   };
 
-
+  // get drop index on basis of mouse position
     const getDropIndex = useCallback((e) => {
       const dropZone = e.currentTarget;
       const fieldElements = Array.from(dropZone.querySelectorAll('.form-field-item'));
@@ -230,7 +229,7 @@ const renderField = (field, idx) => {
         )}
     <div
       key={field.id}
-      className={`form-canvas relative p-4 border rounded-md shadow-sm transition mb-1
+      className={`form-field-item relative p-4 border rounded-md shadow-sm transition mb-1
         ${isSelected ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white"}`}
       onClick={() => onFieldChange(field.id)}
       draggable

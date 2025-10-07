@@ -1,6 +1,6 @@
-export const formsService = async(val = 'ACTIVE', formattedResponse = 'All', selectedId = null) => {
+export const formsService = async(val = 'ACTIVE', formattedResponse = 'All', selectedId = null, page , limit) => {
     try {
-        let queryParams = `q=${val}&resp=${formattedResponse}`;
+        let queryParams = `q=${val}&resp=${formattedResponse}&page=${page}&limit=${limit}`;
         if (selectedId) {
             queryParams += `&userId=${selectedId}`;
         }
@@ -9,7 +9,7 @@ export const formsService = async(val = 'ACTIVE', formattedResponse = 'All', sel
         if (!res.ok) {
             console.error('Error in fetching forms');
         }
-        return data?.data;
+        return {data: data?.data , meta: data?.meta};
     } catch (err) {
         console.error('Error fetching Forms', err.message);
     }

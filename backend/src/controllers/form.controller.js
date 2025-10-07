@@ -27,8 +27,8 @@ export const publishForm = async(req,res) => {
 export const getFormsById = async(req,res)=>{
     try {
         const {id,role} = req?.user;
-        const{q,resp,userId} = req.query;
-        const results =  await formService.getFormsByIdService(id,role,q,userId);
+        const{q,resp,userId,page,limit} = req.query;
+        const {results,meta} =  await formService.getFormsByIdService(id,role,q,userId,page,limit);
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.set('Pragma', 'no-cache');
         res.set('Expires', '0');
@@ -46,7 +46,7 @@ export const getFormsById = async(req,res)=>{
         }else{
             data = results.map(form => getForms(form));
         }
-        return sendResponse(res, STATUS_CODES.OK, true, "Forms fetched successfully", data);
+        return sendResponse(res, STATUS_CODES.OK, true, "Forms fetched successfully", data, meta);
     } catch (error) {
         console.error('Controller Error in getting Form',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)
@@ -90,11 +90,11 @@ export const viewForm = async(req,res)=>{
 
 export const getFormSubmissionData = async(req,res)=>{
     try {
-        const {formId,status,email} = req.body;
+        const {formId,status,email,page,limit} = req.body;
         const userId = req.user.id
         const role = req.user.role
-        const result = await formService.getFormSubmissionService(formId,userId,role,status,email);
-        return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",result)
+        const {response,meta} = await formService.getFormSubmissionService(formId,userId,role,status,email,page,limit);
+        return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",response,meta);
     } catch (error) {
         console.error('Controller Error in getFormSubmissionData',error)
         return sendError(res,STATUS_CODES.BADREQUEST,false,error.message)

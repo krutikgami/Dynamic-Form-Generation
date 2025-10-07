@@ -3,18 +3,21 @@ import { formsService } from "../utilities/services/formsService.js";
 import { Eye, FileText } from "lucide-react";
 import FilterByStatus from "../components/Filter/FilterByStatus.jsx";
 import { useNavigate } from "react-router-dom";
-import { formStatusFilter, getFormService } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import { formStatusFilter, getFormService, Limit, Page } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import Pagination from "../components/common/Pagination.jsx";
 
 export default function FormManager() {
   const navigate = useNavigate()
   const [forms, setForms] = useState([]);
   const [value, setValue] = useState("All");
   const [filterHide,setFilterHide] = useState(false)
-
+  const [page, setPage] = useState(Page);
+  const [meta,setMeta] = useState({});
   const fetchForms = async (val) => {
     try {
-      const data = await formsService(val,getFormService.manager);
+      const {data,meta} = await formsService(val,getFormService.manager,null,page,Limit);
       setForms(data || []);
+      setMeta(meta)
     } catch (error) {
       console.error("Error Fetching Forms", error);
     }
@@ -22,7 +25,7 @@ export default function FormManager() {
   
   useEffect(() => {
     fetchForms(value);
-  }, [value]);
+  }, [value,page]);
 
   
   const handleClick = async (formId) => {
@@ -60,6 +63,9 @@ export default function FormManager() {
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-4">
+          <Pagination page={page} setPage={setPage} totalPages={meta?.totalPages || 1}/>
         </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "../ToastContainerUtility/ToastContainer";
 import Button from "../common/Button";
 import Modal from "../common/Modal";
+import { roleAdmin,getFormService,createField,createFieldSmall } from "../../utilities/AdminPanelConstants/FieldTypes.js";
+import Pagination from "../common/Pagination.jsx";
 
 export default function TableRender(props) {
   const {showToast} = useToast()
@@ -28,11 +30,11 @@ export default function TableRender(props) {
   }, [props]);
 
   const handleEdit = (formId,idx) => {
-    navigate(role === "ADMIN" ? "/renderer" : "/userrenderer", { state: { formId , isEdit: true , email: submissionData[idx]?.email} });
+    navigate(role === roleAdmin ? "/renderer" : "/userrenderer", { state: { formId , isEdit: true , email: submissionData[idx]?.email} });
   };
 
   const handleView = (formId,idx)=>{
-    navigate(role === "ADMIN" ? "/renderer" : "/userrenderer", { state: { formId , isView: true , email: submissionData[idx]?.email } });
+    navigate(role === roleAdmin ? "/renderer" : "/userrenderer", { state: { formId , isView: true , email: submissionData[idx]?.email } });
   }
 
   const handleDelete = async (formId, idx) => {
@@ -91,7 +93,7 @@ export default function TableRender(props) {
                   key={idx}
                   className="hover:bg-gray-50 transition border-b"
                 >
-                  {props.manager !== 'Manager' ? (
+                  {props.manager !== getFormService.manager ? (
                     <>
                   {tableHeadings.map((heading, hIdx) => (
                     <td
@@ -113,8 +115,8 @@ export default function TableRender(props) {
 
                       if (key === "id") {
                         cellValue = idx + 1;
-                      } else if (key === "createdat" || key === "created_at") {
-                        const rawDate = row["created_at"];
+                      } else if (key === createFieldSmall || key === createField) {
+                        const rawDate = row[createField];
                         cellValue = rawDate ? rawDate.split("T")[0] : ""; 
                       }
 
@@ -135,10 +137,10 @@ export default function TableRender(props) {
                       title="Edit"
                       onClickFunction={() => handleEdit(id, idx)}
                       className={`px-2 py-1 rounded 
-                        ${submissionData[idx]?.deleted_at !== null 
+                        ${submissionData[idx]?.deleted_at !== null || submissionData[idx]?.isEditable === false
                           ? "bg-gray-400 text-white cursor-not-allowed" 
                           : "bg-blue-500 text-white hover:bg-blue-600"}`}
-                      disabled={submissionData[idx]?.deleted_at !== null}
+                      disabled={ role === roleAdmin ? submissionData[idx]?.deleted_at !== null : (submissionData[idx]?.isEditable === false || submissionData[idx]?.deleted_at !== null)}
                     />
 
                     <Button
@@ -148,7 +150,7 @@ export default function TableRender(props) {
                     />
                     
 
-                    {role === "ADMIN" && (
+                    {role === roleAdmin && (
                       <>
                       <Button
                         title="Delete"
@@ -188,6 +190,9 @@ export default function TableRender(props) {
             )}
           </tbody>
         </table>
+        <div className="mt-4">
+          <Pagination page={props.page} setPage={props.setPage} totalPages={props.totalPages}/>
+        </div>
       </div>
     </div>
   );

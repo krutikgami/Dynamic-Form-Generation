@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { formsService } from "../utilities/services/formsService.js";
 import { useNavigate } from "react-router-dom";
+import { Limit, Page } from "../utilities/AdminPanelConstants/FieldTypes.js";
+import Pagination from "../components/common/Pagination.jsx";
 
 export default function UserFormManager() {
   const [forms, setForms] = useState([]);
+  const [page, setPage] = useState(Page);
+  const [meta,setMeta] = useState({});
   const navigate = useNavigate();
 
   const fetchForms = async () => {
     try {
-      const data = await formsService();
+      const {data,meta} = await formsService('ACTIVE',"All",null,page,Limit);
       setForms(data || []);
+      setMeta(meta)
     } catch (error) {
       console.error("Error Fetching Forms", error);
     }
@@ -17,7 +22,7 @@ export default function UserFormManager() {
 
   useEffect(() => {
     fetchForms();
-  }, []);
+  }, [page]);
 
   const handleView = (formId) => {
     navigate("/viewData", { state: { formId } });
@@ -40,6 +45,9 @@ export default function UserFormManager() {
             </span>
           </div>
         ))}
+      </div>
+      <div className="mt-4">
+        <Pagination page={page} setPage={setPage} totalPages={meta?.totalPages || 1}/>
       </div>
     </div>
   );

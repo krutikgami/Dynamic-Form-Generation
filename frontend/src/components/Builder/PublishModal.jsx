@@ -9,6 +9,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
   const [suggestions, setSuggestions] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [isPublic, setIsPublic] = useState(false);
+  const [isEditable, setIsEditable] = useState(false);
 
   useEffect(() => {
     if (formData) {
@@ -18,6 +19,9 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       setStartDate(formData.startDate ? formData.startDate.split("T")[0] : "");
       setEndDate(formData.endDate ? formData.endDate.split("T")[0] : "");
       setIsPublic(formData.isPublic || false);
+      setIsEditable(formData.isEditable || false);
+
+      // Pre-fill textarea and selectedUsers based on formData
        if (formData.accessControls && !formData.isPublic) {
         const preUsers = formData.accessControls.map((d) => ({
           id: d.userId,
@@ -99,6 +103,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       id: formData.id,
       status,
       isPublic,
+      isEditable,
       maxSubmissions: maxSubmissions ? parseInt(maxSubmissions) : null,
       startDate: startDate || null,
       endDate: endDate || null,
@@ -158,7 +163,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
             </div>
           </div>
 
-           <div className="flex items-center gap-2">
+           <div className="flex items-center gap-4">
             <input
               id="isPublic"
               type="checkbox"
@@ -168,6 +173,17 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
             />
             <label htmlFor="isPublic" className="text-sm font-medium">
               Access to all users
+            </label>
+
+            <input
+              id="isEditable"
+              type="checkbox"
+              checked={isEditable}
+              onChange={(e) => setIsEditable(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <label htmlFor="isEditable" className="text-sm font-medium">
+              Allow users to edit their submissions
             </label>
           </div>
 

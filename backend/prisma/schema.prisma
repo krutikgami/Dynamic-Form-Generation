@@ -46,6 +46,7 @@ model Form {
   startDate       DateTime?       // form availability start
   endDate         DateTime?       // form expiry
   isPublic       Boolean         @default(false) //Give access to public users
+  isEditable     Boolean         @default(false) //Allow users to edit their submissions
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
   deleted_at      DateTime?

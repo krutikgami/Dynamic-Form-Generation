@@ -11,3 +11,4 @@ export const getFormsService = {
 }
 
 export const STATUSNOTIN = ['DRAFT','INACTIVE']
+export const view = 'viewData';
