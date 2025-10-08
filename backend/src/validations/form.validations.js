@@ -29,13 +29,13 @@ export const publishFormSchema = z
       }),
     isPublic: z.boolean().optional(),
     isEditable: z.boolean().optional(),
+    submissionMessage: z.string().max(100, "Submission message is too long").optional(),
   })
   .superRefine((data, ctx) => {
     if (data.isPublic === false && (!data.userIds || data.userIds.length === 0)) {
       ctx.addIssue({
         path: ["userIds"],
-        message: "User IDs are required when isPublic is false",
-        code: z.ZodIssueCode.custom,
+        message: "Give at least one user for private form"
       });
     }
   });

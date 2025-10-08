@@ -36,7 +36,7 @@ export default function ViewAllForms({role}) {
 
   useEffect(() => {
     fetchForms(value, selectedId);
-  }, [value, selectedId,page]);
+  }, [value, selectedId,page,showPublishModal]);
    
   const handleView = async(formId) => {
     console.log(formId);

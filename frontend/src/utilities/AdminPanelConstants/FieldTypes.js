@@ -83,6 +83,9 @@ export const createField = 'created_at'
 export const createFieldSmall = 'createdat'
 
 export const formAnalyticsTableHeadings = ['ID','Email',"Name","CreatedAt"]
+export const viewUserSubmissionStatusFilter = [{
+  Yes : "YES",
+}]
 
 export const Page = 1
 export const Limit = 6

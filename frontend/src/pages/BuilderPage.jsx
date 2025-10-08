@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import FormBuilder from "../components/Builder/FormBuilder";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { formSchemaService } from "../utilities/services/formSchemaService.js";
-
+import { useToast } from "../components/ToastContainerUtility/ToastContainer.jsx";
 export default function BuilderPage({ token }) {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const location = useLocation();
   const formId =  location?.state?.formId; 
   const isEdit = location?.state?.isEdit;
@@ -20,9 +22,10 @@ export default function BuilderPage({ token }) {
       if (!formId) return;
 
       try {
-        const response = await formSchemaService(formId);
+        const {data,res} = await formSchemaService(formId,true);
+        console.log("BuilderPage fetchFormDetails response:", res);
+        const response = data;
         console.log("BuilderPage schema response:", response);
-
         if (response) {
           setForm({
             id: response.id,
@@ -32,6 +35,10 @@ export default function BuilderPage({ token }) {
               fields: response.schema || response.fields || [],
             },
           });
+
+        }else{
+          showToast(res.message,res.success)
+          navigate(-1)
         }
       } catch (error) {
         console.error("Error fetching form details:", error);

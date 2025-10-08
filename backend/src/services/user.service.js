@@ -40,12 +40,9 @@ export class UserService{
         }
     }
 
-    async getEmailSearchByUSerService(q){
+    async getEmailSearchByUSerService(q,role){
         try {
-            if(!q){
-                return;
-            }
-            return userRepo.findEmailByUser(q);
+            return userRepo.findEmailByUser(q,role);
         } catch (error) {
           console.error('Error in User Service.getEmailSearchByUSerService',error)
           throw error;

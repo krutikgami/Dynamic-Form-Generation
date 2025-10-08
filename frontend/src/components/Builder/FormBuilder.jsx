@@ -57,7 +57,7 @@ export default function FormBuilder({ form, onFormSaved,isEdit,token }) {
             console.log(data)
             if(!res.ok){
                 setIsSaved(false);
-                if(data?.errors){
+                if(Array.isArray(data?.errors) && data.errors.length > 0){
                     data?.errors.map((err)=> showToast(err.message,data.success))
                 }else{
                     showToast(data.message,data.success)

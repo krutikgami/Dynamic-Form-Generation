@@ -45,6 +45,7 @@ model Form {
   submissionCount Int             @default(0)
   startDate       DateTime?       // form availability start
   endDate         DateTime?       // form expiry
+  submissionMessage String?       // message to show after submission
   isPublic       Boolean         @default(false) //Give access to public users
   isEditable     Boolean         @default(false) //Allow users to edit their submissions
   created_at      DateTime        @default(now())

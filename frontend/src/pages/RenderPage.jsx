@@ -3,7 +3,7 @@ import DynamicForm from "../components/Renderer/DynamicForm";
 import { useLocation } from "react-router-dom";
 import { formSchemaService } from "../utilities/services/formSchemaService.js";
 import { useToast } from "../components/ToastContainerUtility/ToastContainer.jsx";
-export default function RenderPage() {
+export default function RenderPage({ role }) {
   const { showToast } = useToast();
   const location = useLocation();
   const schemas = location?.state?.schema;
@@ -27,9 +27,9 @@ export default function RenderPage() {
 
     const loadSchema = async () => {
       try {
-        const response = await formSchemaService(formId);
-        console.log("Form schema response:", response);
-        setSchema(response);
+        const {data} = await formSchemaService(formId);
+        console.log("Form schema response:", data);
+        setSchema(data);
       } catch (error) {
         console.error("Error fetching form schema:", error);
         setSchema(null);
@@ -79,6 +79,7 @@ export default function RenderPage() {
       <div className="w-full max-w-lg mt-5">
         {schema ? (
           <DynamicForm
+            role={role}
             schema={schema}
             isPreview={isPreview}
             isEdit={isEdit}

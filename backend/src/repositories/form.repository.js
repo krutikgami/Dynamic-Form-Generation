@@ -23,6 +23,7 @@ export class FormRepository{
           data :{
             isPublic : formData.isPublic,
             isEditable : formData.isEditable,
+            submissionMessage : formData.submissionMessage ? formData.submissionMessage.trim() : null,
             maxSubmissions : formData.maxSubmissions,
             status : formData.status,
             startDate : formData.startDate,
@@ -200,13 +201,10 @@ export class FormRepository{
       }
     }
 
-    async deleteAccessControlByUserID({formId,userId},client=tx){
+    async deleteAccessControlByID({where},client=tx){
       try {
         return await client.accessControl.deleteMany({
-          where :{
-            formId,
-            userId
-          }
+          where
         })
       } catch (error) {
         console.error('DB Error in FormRepository.updateAccessControl',error)
@@ -214,13 +212,10 @@ export class FormRepository{
       }
     }
 
-    async deleteExcludedUserByUserID({formId,userId},client=tx){
+    async deleteExcludedUserByID({where},client=tx){
       try {
         return await client.excludedUser.deleteMany({
-          where :{
-            formId,
-            userId
-          }
+          where
         })
       } catch (error) {
         console.error('DB Error in FormRepository.deleteExcludedUserByUserID',error)
@@ -356,7 +351,6 @@ export class FormRepository{
       }
     }
 
-
     async countFormSubmissions(formId,submissionWhere={}){
       try {
         return await prisma.submission.count({
@@ -377,6 +371,7 @@ export class FormRepository{
           where: {
             formId,
             userId,
+            deleted_at: null
           }
         });
 
@@ -402,7 +397,8 @@ export class FormRepository{
             id : true,
             title : true,
             description : true,
-            schema : true
+            schema : true,
+            submissionCount : true,
           }
         })
       } catch (error) {

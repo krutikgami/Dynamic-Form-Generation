@@ -27,20 +27,29 @@ export class UserRepository{
         }
     }
 
-    async findEmailByUser(q){
+    async findEmailByUser(q,role){
         try {
+            const where = {
+                deleted_at: null,
+            };
+
+            if (q) {
+                where.email = {
+                    contains: q,
+                    mode: 'insensitive',
+                };
+            }
+
+            if (role) {
+                where.role = role;
+            }
             return await prisma.user.findMany({
-                where :{
-                    email : {
-                        contains : q,
-                        mode : 'insensitive'
-                    }
+                where,
+                select: {
+                    id: true,
+                    email: true,
                 },
-                select : {
-                    id : true,
-                    email : true
-                }
-            })
+            });
         } catch (error) {
             console.error('DB error for User Repository.findEmailByUser',error)
             throw new Error('Database error while finding EmailByUser');

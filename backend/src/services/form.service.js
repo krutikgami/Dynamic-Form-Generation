@@ -33,7 +33,7 @@ export class FormService{
 
     async publishFormService(formData) {
         try {
-            const { maxSubmissions, startDate, endDate, id, userIds,status,isPublic,isEditable } = formData;
+            const { maxSubmissions, startDate, endDate, id, userIds,status,isPublic,isEditable,submissionMessage } = formData;
 
             const start = startDate === null ? null : new Date(startDate);
             const end = startDate === null ? null :  new Date(endDate);
@@ -43,12 +43,17 @@ export class FormService{
                 throw new Error('Form does not exist');
             }
 
+            if(start > end && (start !== null && end !== null)){
+                throw new Error('Start date is not greater than End date');
+            }
+
             return await prisma.$transaction(async (tx) => {
                 const publishedForm = await formRepo.publishForm(
                     {
                     id,
                     isPublic : isPublic || false,
                     isEditable : isEditable || false,
+                    submissionMessage : submissionMessage || null,
                     maxSubmissions: maxSubmissions || null,
                     startDate: start,
                     endDate: end,
@@ -57,17 +62,32 @@ export class FormService{
                     tx
                 )
                 
-                const existingUserIds = isPublic ? isFormExist?.excludedUsers?.map(a => a.userId) : isFormExist.accessControls.map(a => a.userId);
+                const formWasPublic = isFormExist.isPublic;
+                const formIsNowPublic = isPublic;
+
+                // CASE 1: Private → Public → Delete all accessControls
+                if (!formWasPublic && formIsNowPublic) {
+                    await formRepo.deleteAccessControlByID({ where : {formId : id} }, tx);
+                }
+
+                //CASE 2: Public → Private → Delete all excludedUsers
+                if (formWasPublic && !formIsNowPublic) {
+                    await formRepo.deleteExcludedUserByID({ where : {formId : id} }, tx);
+                }
+
+                const existingUserIds = isPublic
+                    ? isFormExist?.excludedUsers?.map(a => a.userId)
+                    : isFormExist.accessControls.map(a => a.userId);
 
                 const newUserIds = userIds.filter(uid => !existingUserIds.includes(uid));
 
                 if (newUserIds.length > 0) {
-                    if(isPublic){
+                    if (isPublic) {
                         await formRepo.createExcludedUser(
-                            newUserIds.map(uid => ({ formId: id, userId: uid })), 
+                            newUserIds.map(uid => ({ formId: id, userId: uid })),
                             tx
-                        )
-                    }else{
+                        );
+                    } else {
                         await formRepo.createAccessControl(
                             newUserIds.map(uid => ({ formId: id, userId: uid, role })),
                             tx
@@ -78,24 +98,22 @@ export class FormService{
                 const removeUserIds = existingUserIds.filter((uid) => !userIds.includes(uid));
 
                 if (removeUserIds.length > 0) {
-                    if(isPublic){
+                    if (isPublic) {
                         for (const uid of removeUserIds) {
-                            await formRepo.deleteExcludedUserByUserID({ formId: id, userId: uid }, tx);
+                            await formRepo.deleteExcludedUserByID({ where:{formId: id, userId: uid} }, tx);
                         }
-                    }else{
+                    } else {
                         for (const uid of removeUserIds) {
-                            await formRepo.deleteAccessControlByUserID({ formId: id, userId: uid }, tx);
+                            await formRepo.deleteAccessControlByID({ where : {formId: id, userId: uid} }, tx);
                         }
                     }
                 }
 
-                const isExists  = await formRepo.getFormAnalyticsById({formId : id},tx);
-
-                if(!isExists){
-                    await formRepo.createFormAnalytics({ formId: id }, tx)
+                const isExists = await formRepo.getFormAnalyticsById({ formId: id }, tx);
+                if (!isExists) {
+                    await formRepo.createFormAnalytics({ formId: id }, tx);
                 }
-                
-                return publishedForm
+                return publishedForm;
             })
         } catch (error) {
             console.error('Error in FormService.publishForm', error);
@@ -132,6 +150,9 @@ export class FormService{
             const isFormExists = await formRepo.getFormExists(id);
             if(!isFormExists){
                 throw new Error('Form Doesn`t exists')
+            }
+            if (isFormExists.submissionCount > 0) {
+                throw new Error('Form cannot be edited as submissions are already made')
             }
             return await formRepo.updateForm({
                 id,
@@ -196,6 +217,7 @@ export class FormService{
                 //applied database trigger for incrementing count
                 // await formRepo.updateFormCount({formId, data : {submissionCount : {increment : 1}}},tx);
                 // await formRepo.updateFormAnalytics({formId , data : {totalSubmissions : {increment : 1},lastSubmittedAt : new Date()}},tx)
+                formSubmission.submissionMessage = formExists.submissionMessage;
                 return formSubmission;
             })
         } catch (error) {
@@ -234,7 +256,7 @@ export class FormService{
         }
     }
 
-    async getFormSubmissionService(formId,userId,role,status,email,page,limit){
+    async getFormSubmissionService(formId,value,userId,role,status,email,page,limit){
         try {
             const formExists = await formRepo.getFormExists(formId);
             if(!formExists){
@@ -243,6 +265,10 @@ export class FormService{
             const submissionWhere = {};
             if (role === user && userId) {
                 submissionWhere.userId = userId;
+            }else{
+                if(value){
+                    submissionWhere.deleted_at = value === 'YES' ? { not: null } : null;
+                }   
             }
 
             const skip = parseInt((page - 1) * limit);
@@ -341,16 +367,25 @@ export class FormService{
             }
 
             const userIdToUpdate = userExists ? userExists.id : userId
-            return await formRepo.updateFormSubmission(formId, userIdToUpdate, data);
+            const result = await formRepo.updateFormSubmission(formId, userIdToUpdate, data);
+            result.submissionMessage = formExists.submissionMessage;
+            return result;
         } catch (error) {
             console.error('Error in FormService.updateUserDataService', error);
             throw error;
         }
     }
 
-    async getFormSchemaByIdService(formId){
+    async getFormSchemaByIdService(formId,validate = false){
         try {
-            return await formRepo.getFormSchemaById(formId)
+            const result =  await formRepo.getFormSchemaById(formId)
+            if(validate){
+                if(result.submissionCount > 0){
+                    throw new Error('Form cannot be edited as submissions are already made')
+                }
+            }
+            const removeSubmissionCount = (({submissionCount,...rest})=> rest)(result)
+            return removeSubmissionCount;
         } catch (error) {
             console.error('Error in FormService.getFormSchemaById', error);
             throw error;

@@ -1,16 +1,17 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { validateField } from "../../utilities/validations/validateField.js";
 import RenderField from "./RenderField.jsx";
 import { useToast } from "../ToastContainerUtility/ToastContainer.jsx";
+import { useNavigate } from "react-router-dom";
+import { roleAdmin } from "../../utilities/AdminPanelConstants/FieldTypes.js";
 
-export default function DynamicForm({ schema,isPreview,isEdit,submissionData,isView }) {
+export default function DynamicForm({ role,schema,isPreview,isEdit,submissionData,isView }) {
   const {showToast} = useToast();
+  const navigate = useNavigate();
   const [isLoading,setIsLoading] = useState(false)
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
-  console.log(schema);
-  console.log(submissionData)
+
    //call when user or admin try to update data of form
    useEffect(() => {
     if (submissionData) {
@@ -63,6 +64,11 @@ export default function DynamicForm({ schema,isPreview,isEdit,submissionData,isV
             showToast(data.message,data.success)
           }
           return
+        }
+        const submissionMessage = data?.data?.submissionMessage
+        if(submissionMessage && role !== roleAdmin){
+          localStorage.setItem('submissionMessage',JSON.stringify(submissionMessage))
+          navigate('/message')
         }
         showToast(data.message,data.success)
       }

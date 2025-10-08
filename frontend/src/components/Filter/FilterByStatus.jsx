@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function FilterByStatus({ onChange,formStatusFilter }) {
+export default function FilterByStatus({ onChange, title,formStatusFilter }) {
   const [statusValue, setStatusValue] = useState("All");
 
   const handleChange = (e) => {
@@ -14,7 +14,7 @@ export default function FilterByStatus({ onChange,formStatusFilter }) {
   return (
     <div className="relative w-auto">
       <label htmlFor="status" className="font-medium">
-        Filter By Status: 
+        {title || "Filter By Status: "}
       </label>
       <select
         id="status"

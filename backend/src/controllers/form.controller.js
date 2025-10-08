@@ -90,10 +90,10 @@ export const viewForm = async(req,res)=>{
 
 export const getFormSubmissionData = async(req,res)=>{
     try {
-        const {formId,status,email,page,limit} = req.body;
+        const {formId,value,status,email,page,limit} = req.body;
         const userId = req.user.id
         const role = req.user.role
-        const {response,meta} = await formService.getFormSubmissionService(formId,userId,role,status,email,page,limit);
+        const {response,meta} = await formService.getFormSubmissionService(formId,value,userId,role,status,email,page,limit);
         return sendResponse(res,STATUS_CODES.OK,true,"Form Data Fetched Successfully",response,meta);
     } catch (error) {
         console.error('Controller Error in getFormSubmissionData',error)
@@ -121,8 +121,8 @@ export const updateUserSubmissionData = async(req,res)=>{
 
 export const getFormSchema = async(req,res)=>{
     try {
-        const {formId} = req.body;
-        const getSchema = await formService.getFormSchemaByIdService(formId)
+        const {formId,validate} = req.body;
+        const getSchema = await formService.getFormSchemaByIdService(formId,validate);
         return sendResponse(res,STATUS_CODES.OK,true,"Form Schema Fetched Successfully",getSchema);
     } catch (error) {
         console.error('Controller Error in getFormSchema',error)

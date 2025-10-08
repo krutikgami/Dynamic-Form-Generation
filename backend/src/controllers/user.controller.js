@@ -48,8 +48,9 @@ export const loginUser = async(req,res)=>{
 
 export const getEmailSearchByUSer=async(req,res)=>{
     try {
-        const {q} = req.query;
-        const results = await userService.getEmailSearchByUSerService(q);
+        const {q,role} = req.query;
+        const results = await userService.getEmailSearchByUSerService(q,role);
+        console.log(results)
         return sendResponse(res,STATUS_CODES.OK,true,'Users Fetched Successfully',results) 
     } catch (error) {
         console.error('Controller Error in getEmailSearchByUSer',error)

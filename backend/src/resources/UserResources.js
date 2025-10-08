@@ -47,6 +47,7 @@ export const adminFormRenderer = (formData)=>{
         startDate : formData.startDate,
         endDate : formData.endDate,
         status : formData.status,
+        submissionMessage : formData.submissionMessage,
         maxSubmissions : formData.maxSubmissions,
         [key] : value ?? []
     }

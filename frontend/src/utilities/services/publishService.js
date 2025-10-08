@@ -17,14 +17,13 @@ export function usePublish() {
       console.log(data);
 
       if (!res.ok) {
-        if (data?.errors) {
+        if (Array.isArray(data?.errors) && data.errors.length > 0) {
           data.errors.forEach((err) => showToast(err.message, data.success));
         } else {
           showToast(data.message, data.success);
         }
         return;
       }
-
       showToast(data.message, data.success);
       if (onClose) onClose();
       return data;

@@ -10,6 +10,8 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [isPublic, setIsPublic] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
+  const [submissionMessage, setSubmissionMessage] = useState("");
+  const [fetchAllUsers, setFetchAllUsers] = useState(false);
 
   useEffect(() => {
     if (formData) {
@@ -20,6 +22,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       setEndDate(formData.endDate ? formData.endDate.split("T")[0] : "");
       setIsPublic(formData.isPublic || false);
       setIsEditable(formData.isEditable || false);
+      setSubmissionMessage(formData.submissionMessage || "");
 
       // Pre-fill textarea and selectedUsers based on formData
        if (formData.accessControls && !formData.isPublic) {
@@ -40,21 +43,32 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
     }
   }, [formData, isOpen]);
 
-  const fetchUsers = useCallback(async (query) => {
-    if (!query.trim()) {
+  const fetchUsers = useCallback(async (query='', fetchAll = false) => {
+    if (!query.trim() && !fetchAll) {
       setSuggestions([]);
       return;
     }
     try {
-      const res = await fetch(`/api/v1/admin/search?q=${query}`);
+      const res = await fetch(`/api/v1/admin/search?q=${query}&role=USER`);
       const result = await res.json();
       if (result.success) {
-        setSuggestions(result.data);
+        if (fetchAll) {
+          // When fetching all users, add them to selected users
+          const allUsers = result.data;
+          const existingEmails = selectedUsers.map(u => u.email);
+          const newUsers = allUsers.filter(u => !existingEmails.includes(u.email));
+          const updatedUsers = [...selectedUsers, ...newUsers];
+          
+          setSelectedUsers(updatedUsers);
+          setTextareaValue(updatedUsers.map(u => u.email).join(", "));
+        } else {
+          setSuggestions(result.data);
+        }
       }
     } catch (err) {
       console.error("Error fetching users", err);
     }
-  },[]);
+  },[selectedUsers]);
 
   useEffect(() => {
     const words = textareaValue.split(",");
@@ -68,6 +82,13 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       setSuggestions([]);
     }
   }, [textareaValue]);
+
+  useEffect(() => {
+    if (fetchAllUsers) {
+      fetchUsers("", true);
+      setFetchAllUsers(false);
+    }
+  }, [fetchAllUsers]);
 
   const handleTextareaChange = (e) => {
     const value = e.target.value;
@@ -104,6 +125,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
       status,
       isPublic,
       isEditable,
+      submissionMessage,
       maxSubmissions: maxSubmissions ? parseInt(maxSubmissions) : null,
       startDate: startDate || null,
       endDate: endDate || null,
@@ -187,7 +209,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
             </label>
           </div>
 
-           <div className="relative">
+          {/* <div className="relative">
             <label className="block text-sm font-medium mb-1">
               {isPublic
                 ? "Exclude Users (comma separated)"
@@ -217,6 +239,73 @@ export default function PublishModal({ isOpen, onClose, onPublish, formData }) {
                 ))}
               </ul>
             )}
+          </div> */}
+
+          {/* User Emails / Exclude Users */}
+        <div className="relative">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium">
+              {isPublic
+                ? "Exclude Users (comma separated)"
+                : "User Emails (comma separated)"}
+            </label>
+
+            {/* Checkbox to fetch all users with role USER */}
+           
+              <div className="flex items-center gap-1">
+                <input
+                  id="fetchAllUsers"
+                  type="checkbox"
+                  checked={selectedUsers.some(u => u.role === 'USER') || fetchAllUsers}
+                  onChange={(e) =>setFetchAllUsers(e.target.checked)} 
+                  className="w-4 h-4"
+                />
+                <label htmlFor="fetchAllUsers" className="text-xs text-gray-600">
+                  Select All Users
+                </label>
+              </div>
+          </div>
+
+          {/* Textarea for manual typing */}
+          <textarea
+            rows={2}
+            className="w-full border rounded-md px-3 py-2"
+            placeholder={
+              isPublic
+                ? "Type emails of users to exclude..."
+                : "Type emails, suggestions will appear..."
+            }
+            value={textareaValue}
+            onChange={handleTextareaChange}
+          />
+
+          {/* Suggestions dropdown */}
+          {suggestions.length > 0 && (
+            <ul className="absolute bg-white border rounded-md shadow-md mt-1 w-full max-h-40 overflow-y-auto z-10">
+              {suggestions.map((user) => (
+                <li
+                  key={user.id}
+                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleSuggestionClick(user)}
+                >
+                  {user.email}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Submission Message (shown after form submission) (optional)
+            </label>
+            <textarea 
+              rows={2}
+              className="w-full border rounded-md px-3 py-2 bg-gray-100"
+              value={submissionMessage}
+              onChange={(e) => setSubmissionMessage(e.target.value)}
+            />
+           
           </div>
           <div className="flex justify-end gap-2">
             <Button

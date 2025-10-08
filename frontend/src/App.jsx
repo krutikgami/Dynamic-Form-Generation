@@ -12,6 +12,7 @@ import FormAnalytics from "./pages/FormAnalytics.jsx"
 import UserFormManager from "./pages/UserFormManager.jsx"
 import ViewUserData from "./pages/ViewUserData.jsx"
 import { roleAdmin,roleUser } from "./utilities/AdminPanelConstants/FieldTypes.js"
+import SubmissinMessageDisplay from "./pages/SubmissinMessageDisplay.jsx"
 
 
 function AppLayout() {
@@ -42,11 +43,12 @@ function AppLayout() {
           <Route path="/builder" element={<ProtectedAdmin role={decoded?.role}><BuilderPage token={decoded} /> </ProtectedAdmin>} />
           <Route path="/manager" element={<ProtectedAdmin role={decoded?.role}><FormManager /> </ProtectedAdmin>} />
           <Route path="/analytics" element={<ProtectedAdmin role={decoded?.role}><FormAnalytics /> </ProtectedAdmin>} />
-          <Route path="/renderer" element={<ProtectedAdmin role={decoded?.role} ><RendererPage /></ProtectedAdmin>} />
-          <Route path="/userrenderer" element={<RendererPage />} />
+          <Route path="/renderer" element={<ProtectedAdmin role={decoded?.role} ><RendererPage role={decoded?.role}/></ProtectedAdmin>} />
+          <Route path="/userrenderer" element={<RendererPage role={decoded?.role}/>} />
           <Route path="/view" element={<ViewAllForms role={decoded?.role}/>} />
           <Route path="/usermanager" element={<UserFormManager />} />
           <Route path="/viewData" element={<ViewUserData  role={decoded?.role}/>} />
+          <Route path='/message' element={<SubmissinMessageDisplay />}/>
         </Routes>
       </div>
     </div>
